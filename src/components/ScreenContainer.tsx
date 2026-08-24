@@ -12,8 +12,8 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
   children,
   excludeTop = false,
   excludeBottom = false,
-  className = '',
   style,
+  className = '',
   ...props
 }) => {
   const insets = useSafeAreaInsets();
@@ -22,14 +22,14 @@ export const ScreenContainer: React.FC<ScreenContainerProps> = ({
     <View
       style={[
         {
-          paddingTop: excludeTop ? 0 : insets.top,
+          paddingTop: excludeTop ? 0 : Math.max(insets.top, 16),
           paddingBottom: excludeBottom ? 0 : insets.bottom,
           paddingLeft: insets.left,
           paddingRight: insets.right,
         },
         style,
       ]}
-      className={`flex-1 bg-background ${className}`}
+      className={`flex-1 bg-[#05070B] ${className}`}
       {...props}
     >
       {children}

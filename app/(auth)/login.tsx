@@ -1,84 +1,92 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useMutation } from '@tanstack/react-query';
 import { ScreenContainer } from '../../src/components/ScreenContainer';
 import { CyberInput } from '../../src/components/CyberInput';
-import { CyberButton } from '../../src/components/CyberButton';
 import { useAuth } from '../../src/context/AuthContext';
-import { authService, LoginPayload } from '../../src/services/authService';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
   
-  const [email, setEmail] = useState('admin@admin.com');
-  const [password, setPassword] = useState('AdminPass');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  // TanStack Query Login Mutation
-  const loginMutation = useMutation({
-    mutationFn: (credentials: LoginPayload) => authService.login(credentials),
-    onSuccess: async (data) => {
-      await login(data.token, data.user);
+  const handleLogin = async () => {
+    if (!email || !password) {
+      setError('Please fill in all fields');
+      return;
+    }
+    try {
+      setLoading(true);
+      setError('');
+      await login(email, password);
       router.replace('/(tabs)');
-    },
-    onError: (error: Error) => {
-      Alert.alert('Authentication Failed', error.message);
-    },
-  });
-
-  const handleLogin = () => {
-    loginMutation.mutate({ email, passcode: password });
+    } catch (err: any) {
+      setError(err.message || 'Login failed. Check your credentials.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <ScreenContainer className="px-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1}} showsVerticalScrollIndicator={false}>
-        <View className="mb-8 pt-8">
-          <Text className="font-rajdhani-bold text-xs uppercase tracking-[0.3em] text-neon-light">
-            SECURITY_CHECK // AUTH
+    <ScreenContainer className="bg-background px-6">
+      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} showsVerticalScrollIndicator={false}>
+        {/* Branding */}
+        <View className="mb-8">
+          <Text className="font-orbitron-black text-3xl font-bold text-text-main">
+            MATIKS <Text className="text-accentGreen">GAMING</Text>
           </Text>
-          <Text className="mt-1 font-orbitron-black text-3xl text-white">
-            ACCESS <Text className="text-neon">TERMINAL</Text>
-          </Text>
-          <Text className="mt-2 font-rajdhani text-sm text-text-muted">
-            Enter admin credentials to link to the Neural Arena.
+          <Text className="mt-1 font-rajdhani text-sm text-text-muted">
+            Enter your credentials to access your player profile
           </Text>
         </View>
 
-        <CyberInput
-          label="Operative Email"
-          placeholder="admin@admin.com"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
+        {/* Form Card */}
+        <View className="rounded-2xl border border-cardBorder bg-card p-5">
+          {error ? (
+            <View className="mb-4 rounded-xl bg-red-500/10 p-3 border border-red-500/20">
+              <Text className="font-rajdhani text-xs text-red-400">{error}</Text>
+            </View>
+          ) : null}
 
-        <CyberInput
-          label="Passcode"
-          placeholder="AdminPass"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+          <CyberInput
+            label="Email Address"
+            placeholder="player@domain.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        <TouchableOpacity className="mb-6 align-self-end">
-          <Text className="font-rajdhani-bold text-xs uppercase text-neon">
-            Forgot Passcode?
-          </Text>
-        </TouchableOpacity>
+          <CyberInput
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
 
-        <CyberButton
-          title="Authenticate"
-          isLoading={loginMutation.isPending}
-          onPress={handleLogin}
-        />
+          <TouchableOpacity
+            onPress={handleLogin}
+            disabled={loading}
+            className="mt-2 items-center justify-center rounded-xl bg-accentGreen py-3.5 active:opacity-90"
+          >
+            {loading ? (
+              <ActivityIndicator color="#121212" />
+            ) : (
+              <Text className="font-orbitron text-xs font-bold text-background">LOG IN</Text>
+            )}
+          </TouchableOpacity>
+        </View>
 
-        <View className="mt-6 flex-row justify-center pb-8">
-          <Text className="font-rajdhani text-sm text-text-muted">New Operative? </Text>
+        {/* Footer Navigation */}
+        <View className="mt-6 flex-row justify-center">
+          <Text className="font-rajdhani text-sm text-text-muted">Don't have an account? </Text>
           <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text className="font-rajdhani-bold text-sm text-neon">Initialize Account</Text>
+            <Text className="font-rajdhani-bold text-sm text-accentGreen">Sign Up</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

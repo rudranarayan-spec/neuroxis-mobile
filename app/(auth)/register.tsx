@@ -1,91 +1,101 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../../src/components/ScreenContainer';
 import { CyberInput } from '../../src/components/CyberInput';
-import { CyberButton } from '../../src/components/CyberButton';
 import { useAuth } from '../../src/context/AuthContext';
 
 export default function RegisterScreen() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { register } = useAuth();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const handleRegister = async () => {
     if (!username || !email || !password) {
-      Alert.alert('Registration Error', 'All field parameters are required.');
+      setError('Please fill in all fields');
       return;
     }
-
-    setLoading(true);
     try {
-      // API call simulation
-      await new Promise((resolve) => setTimeout(resolve, 1200));
-
-      const mockToken = 'mock_jwt_token_987654';
-      const mockUser = { id: 'usr_02', username, email };
-
-      await login(mockToken, mockUser);
+      setLoading(true);
+      setError('');
+      await register(username, email, password);
       router.replace('/(tabs)');
-    } catch (err) {
-      Alert.alert('Registration Failed', 'Could not establish connection.');
+    } catch (err: any) {
+      setError(err.message || 'Registration failed. Try again.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScreenContainer className="px-6">
+    <ScreenContainer className="bg-background px-6">
       <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="mb-8">
-          <Text className="font-rajdhani-bold text-xs uppercase tracking-[0.3em] text-neon-light">
-            NEW_PROFILE // REGISTRATION
+          <Text className="font-orbitron-black text-3xl font-bold text-text-main">
+            CREATE <Text className="text-accentGreen">ACCOUNT</Text>
           </Text>
-          <Text className="mt-1 font-orbitron-black text-3xl text-white">
-            JOIN <Text className="text-neon">NEUROXIS</Text>
-          </Text>
-          <Text className="mt-2 font-rajdhani text-sm text-text-muted">
-            Create your cyber operative profile to begin competing.
+          <Text className="mt-1 font-rajdhani text-sm text-text-muted">
+            Join the arena and track your competitive progress
           </Text>
         </View>
 
-        {/* Inputs */}
-        <CyberInput
-          label="Codename / Handle"
-          placeholder="NEON_GHOST"
-          value={username}
-          onChangeText={setUsername}
-        />
+        {/* Form Card */}
+        <View className="rounded-2xl border border-cardBorder bg-card p-5">
+          {error ? (
+            <View className="mb-4 rounded-xl bg-red-500/10 p-3 border border-red-500/20">
+              <Text className="font-rajdhani text-xs text-red-400">{error}</Text>
+            </View>
+          ) : null}
 
-        <CyberInput
-          label="Operative Email"
-          placeholder="agent@neuroxis.io"
-          keyboardType="email-address"
-          autoCapitalize="none"
-          value={email}
-          onChangeText={setEmail}
-        />
+          <CyberInput
+            label="Gamer Tag / Username"
+            placeholder="PlayerOne"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+          />
 
-        <CyberInput
-          label="Passcode"
-          placeholder="••••••••••••"
-          secureTextEntry
-          value={password}
-          onChangeText={setPassword}
-        />
+          <CyberInput
+            label="Email Address"
+            placeholder="player@domain.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
 
-        <CyberButton title="Create Operative Profile" isLoading={loading} onPress={handleRegister} className="mt-2" />
+          <CyberInput
+            label="Password"
+            placeholder="••••••••"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
 
-        {/* Login Link */}
+          <TouchableOpacity
+            onPress={handleRegister}
+            disabled={loading}
+            className="mt-2 items-center justify-center rounded-xl bg-accentGreen py-3.5 active:opacity-90"
+          >
+            {loading ? (
+              <ActivityIndicator color="#121212" />
+            ) : (
+              <Text className="font-orbitron text-xs font-bold text-background">REGISTER</Text>
+            )}
+          </TouchableOpacity>
+        </View>
+
+        {/* Footer Link */}
         <View className="mt-6 flex-row justify-center">
           <Text className="font-rajdhani text-sm text-text-muted">Already registered? </Text>
           <TouchableOpacity onPress={() => router.back()}>
-            <Text className="font-rajdhani-bold text-sm text-neon">Access Terminal</Text>
+            <Text className="font-rajdhani-bold text-sm text-accentGreen">Log In</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>

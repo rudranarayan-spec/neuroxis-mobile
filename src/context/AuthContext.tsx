@@ -11,7 +11,8 @@ interface AuthContextType {
   user: User | null;
   token: string | null;
   isLoading: boolean;
-  login: (token: string, userData: User) => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (username: string, email: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
@@ -40,11 +41,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     loadStoredAuth();
   }, []);
 
-  const login = async (newToken: string, userData: User) => {
-    setToken(newToken);
-    setUser(userData);
-    await SecureStore.setItemAsync('userToken', newToken);
-    await SecureStore.setItemAsync('userData', JSON.stringify(userData));
+  const login = async (email: string, password: string) => {
+    // Replace this logic with your backend API call if needed
+    const mockUser: User = { id: '1', username: email.split('@')[0], email };
+    const mockToken = 'mock-jwt-token';
+
+    setToken(mockToken);
+    setUser(mockUser);
+    await SecureStore.setItemAsync('userToken', mockToken);
+    await SecureStore.setItemAsync('userData', JSON.stringify(mockUser));
+  };
+
+  const register = async (username: string, email: string, password: string) => {
+    // Replace this logic with your backend API call if needed
+    const mockUser: User = { id: Date.now().toString(), username, email };
+    const mockToken = 'mock-jwt-token';
+
+    setToken(mockToken);
+    setUser(mockUser);
+    await SecureStore.setItemAsync('userToken', mockToken);
+    await SecureStore.setItemAsync('userData', JSON.stringify(mockUser));
   };
 
   const logout = async () => {
@@ -55,7 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, logout }}>
+    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );

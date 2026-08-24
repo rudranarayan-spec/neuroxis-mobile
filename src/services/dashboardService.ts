@@ -19,4 +19,5 @@ export const dashboardService = {
       dailyStreak: 7,
     };
   },
+  
 };

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
@@ -9,6 +9,9 @@ import { dashboardService } from '../../src/services/dashboardService';
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
+  const [activeFilter, setActiveFilter] = useState('7 DAYS');
+
+  const filterTabs = ['TODAY', '7 DAYS', '30 DAYS', 'ALL TIME'];
 
   const { data: metrics, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['dashboardMetrics'],
@@ -16,7 +19,7 @@ export default function HomeScreen() {
   });
 
   return (
-    <ScreenContainer className="px-5">
+    <ScreenContainer className="bg-background px-4">
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 32 }}
@@ -24,120 +27,172 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={isRefetching}
             onRefresh={refetch}
-            tintColor="#00FF66"
-            colors={['#00FF66']}
+            tintColor="#B5F23D"
+            colors={['#B5F23D']}
           />
         }
       >
-        {/* 1. OPERATIVE HEADER */}
-        <View className="mb-6 flex-row items-center justify-between pt-4">
+        {/* 1. HEADER */}
+        <View className="mb-5 flex-row items-center justify-between">
           <View>
-            <View className="flex-row items-center gap-2">
-              <View className="h-2 w-2 rounded-full bg-neon animate-pulse" />
-              <Text className="font-rajdhani-bold text-xs uppercase tracking-[0.25em] text-neon">
-                SYSTEM_ONLINE
-              </Text>
-            </View>
-            <Text className="mt-1 font-orbitron-black text-2xl text-white">
-              WELCOME, <Text className="text-neon">{user?.username || 'OPERATIVE'}</Text>
+            <Text className="font-rajdhani text-xs font-semibold text-text-muted">
+              WELCOME BACK
+            </Text>
+            <Text className="font-orbitron-black text-2xl text-text-main">
+              {user?.username || 'Gamer'}
             </Text>
           </View>
 
-          <TouchableOpacity className="h-10 w-10 items-center justify-center rounded-xl border border-neon/40 bg-card">
-            <Text className="font-orbitron text-xs text-neon">N</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 2. OPERATIVE HERO CARD */}
-        <View className="relative mb-6 overflow-hidden rounded-2xl border border-neon/30 bg-card p-5 shadow-lg shadow-neon/10">
-          <View className="flex-row justify-between border-b border-cardBorder/60 pb-3">
-            <View>
-              <Text className="font-rajdhani-bold text-[10px] uppercase tracking-[0.2em] text-text-muted">
-                RANK RATING
-              </Text>
-              <Text className="font-orbitron text-xl text-white">
-                {isLoading ? 'LOADING...' : metrics?.rank}
-              </Text>
-            </View>
-            <View className="items-end">
-              <Text className="font-rajdhani-bold text-[10px] uppercase tracking-[0.2em] text-neon">
-                STREAK
-              </Text>
-              <Text className="font-orbitron text-xl text-neon">
-                🔥 {metrics?.dailyStreak || 0}D
-              </Text>
-            </View>
-          </View>
-
-          {/* Core Stats Row */}
-          <View className="mt-4 flex-row justify-between">
-            <View>
-              <Text className="font-rajdhani text-xs text-text-muted uppercase">MMR Score</Text>
-              <Text className="font-orbitron text-lg text-white">{metrics?.mmr || 0}</Text>
-            </View>
-
-            <View>
-              <Text className="font-rajdhani text-xs text-text-muted uppercase">Win Rate</Text>
-              <Text className="font-orbitron text-lg text-neon">{metrics?.winRate || 0}%</Text>
-            </View>
-
-            <View>
-              <Text className="font-rajdhani text-xs text-text-muted uppercase">Live Arenas</Text>
-              <Text className="font-orbitron text-lg text-white">{metrics?.liveMatchesCount || 0}</Text>
-            </View>
+          {/* User Avatar Badge */}
+          <View className="h-10 w-10 items-center justify-center rounded-xl border border-cardBorder bg-card">
+            <Text className="font-orbitron text-xs font-bold text-accentGreen">
+              {user?.username?.substring(0, 2).toUpperCase() || 'P1'}
+            </Text>
           </View>
         </View>
 
-        {/* 3. QUICK ACTION GRID */}
-        <Text className="mb-3 font-rajdhani-bold text-xs uppercase tracking-[0.2em] text-text-muted">
-          COMMAND_MODULES
+        {/* 2. PILL FILTER TABS */}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="mb-6 flex-row gap-2"
+        >
+          {filterTabs.map((tab) => {
+            const isActive = activeFilter === tab;
+            return (
+              <TouchableOpacity
+                key={tab}
+                onPress={() => setActiveFilter(tab)}
+                className={`rounded-full px-4 py-2 border ${
+                  isActive
+                    ? 'border-accentGreen bg-accentGreen/10'
+                    : 'border-cardBorder bg-card'
+                }`}
+              >
+                <Text
+                  className={`font-rajdhani-bold text-xs ${
+                    isActive ? 'text-accentGreen' : 'text-text-muted'
+                  }`}
+                >
+                  {tab}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {/* 3. FEATURED MODES GRID */}
+        <View className="mb-6 flex-row flex-wrap justify-between gap-3">
+          {/* RANK CARD */}
+          <View className="w-[48%] rounded-2xl border border-cardBorder bg-card p-4">
+            <Text className="font-orbitron-black text-xl text-text-main">
+              {isLoading ? '...' : metrics?.rank || 'LEGEND III'}
+            </Text>
+            <Text className="mt-1 font-rajdhani-bold text-xs uppercase tracking-wider text-text-muted">
+              CURRENT RANK
+            </Text>
+            <Text className="mt-3 font-rajdhani text-xs text-text-muted">Top 2%</Text>
+          </View>
+
+          {/* WIN RATE CARD (HIGHLIGHTED) */}
+          <View className="w-[48%] rounded-2xl border border-accentGreen/40 bg-card p-4">
+            <View className="flex-row items-center justify-between">
+              <Text className="font-orbitron-black text-2xl text-text-main">
+                {metrics?.winRate || 68.5}%
+              </Text>
+              <View className="h-6 w-6 items-center justify-center rounded-lg bg-badge-green/20">
+                <Text className="text-xs">⚡</Text>
+              </View>
+            </View>
+            <Text className="mt-1 font-rajdhani-bold text-xs uppercase tracking-wider text-text-muted">
+              WIN RATE
+            </Text>
+            <Text className="mt-3 font-rajdhani-bold text-xs text-accentGreen">
+              +4.2% ↑
+            </Text>
+          </View>
+        </View>
+
+        {/* 4. STATS OVERVIEW SECTION */}
+        <Text className="mb-3 font-rajdhani-bold text-base text-text-main">
+          Stats Overview
         </Text>
 
         <View className="mb-6 flex-row flex-wrap justify-between gap-3">
-          {/* Quick Play Action */}
-          <TouchableOpacity className="w-[48%] rounded-2xl border border-neon bg-neon/10 p-4 shadow-sm shadow-neon/20">
-            <Text className="font-orbitron text-lg text-neon">⚔️ ENTER</Text>
-            <Text className="mt-1 font-orbitron text-xs text-white">MATCHMAKING</Text>
-            <Text className="mt-2 font-rajdhani text-[11px] text-neon-light">Ranked queue active</Text>
-          </TouchableOpacity>
-
-          {/* Tournaments Action */}
-          <TouchableOpacity className="w-[48%] rounded-2xl border border-cardBorder bg-card p-4">
-            <Text className="font-orbitron text-lg text-white">🏆 TOURNAMENTS</Text>
-            <Text className="mt-1 font-orbitron text-xs text-white">LEAGUES</Text>
-            <Text className="mt-2 font-rajdhani text-[11px] text-text-muted">Season 4 open</Text>
-          </TouchableOpacity>
-
-          {/* Telemetry Stats */}
-          <TouchableOpacity className="w-[48%] rounded-2xl border border-cardBorder bg-card p-4">
-            <Text className="font-orbitron text-lg text-white">📊 TELEMETRY</Text>
-            <Text className="mt-1 font-orbitron text-xs text-white">ANALYTICS</Text>
-            <Text className="mt-2 font-rajdhani text-[11px] text-text-muted">Match history</Text>
-          </TouchableOpacity>
-
-          {/* Cyber Shop */}
-          <TouchableOpacity className="w-[48%] rounded-2xl border border-cardBorder bg-card p-4">
-            <Text className="font-orbitron text-lg text-white">⚡ UPGRADES</Text>
-            <Text className="mt-1 font-orbitron text-xs text-white">ARMORY</Text>
-            <Text className="mt-2 font-rajdhani text-[11px] text-text-muted">Gear & skins</Text>
-          </TouchableOpacity>
-        </View>
-
-        {/* 4. LIVE TICKER BANNER */}
-        <View className="rounded-2xl border border-cardBorder bg-card p-4">
-          <View className="flex-row items-center justify-between">
-            <Text className="font-rajdhani-bold text-xs uppercase tracking-widest text-neon">
-              FEATURED_EVENT
-            </Text>
-            <View className="rounded-full bg-neon/20 px-2.5 py-0.5">
-              <Text className="font-rajdhani-bold text-[10px] text-neon">LIVE NOW</Text>
+          {/* RATING */}
+          <View className="w-[48%] flex-row items-center justify-between rounded-2xl border border-cardBorder bg-card p-3.5">
+            <View>
+              <Text className="font-orbitron-black text-lg text-text-main">
+                {metrics?.mmr || 2840}
+              </Text>
+              <Text className="font-rajdhani text-xs uppercase text-text-muted">
+                RATING (MMR)
+              </Text>
+            </View>
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-badge-purple/20">
+              <Text className="text-base">🧩</Text>
             </View>
           </View>
-          <Text className="mt-2 font-orbitron text-base text-white">
-            {metrics?.activeTournament || 'INITIALIZING EVENT DATA...'}
+
+          {/* WIN STREAK */}
+          <View className="w-[48%] flex-row items-center justify-between rounded-2xl border border-cardBorder bg-card p-3.5">
+            <View>
+              <Text className="font-orbitron-black text-lg text-text-main">
+                {metrics?.dailyStreak || 7} WINS
+              </Text>
+              <Text className="font-rajdhani text-xs uppercase text-text-muted">
+                STREAK
+              </Text>
+            </View>
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-badge-yellow/20">
+              <Text className="text-base">👑</Text>
+            </View>
+          </View>
+
+          {/* LIVE ARENAS */}
+          <View className="w-[48%] flex-row items-center justify-between rounded-2xl border border-cardBorder bg-card p-3.5">
+            <View>
+              <Text className="font-orbitron-black text-lg text-text-main">
+                {metrics?.liveMatchesCount || 14}
+              </Text>
+              <Text className="font-rajdhani text-xs uppercase text-text-muted">
+                LIVE ARENAS
+              </Text>
+            </View>
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-badge-teal/20">
+              <Text className="text-base">🎮</Text>
+            </View>
+          </View>
+
+          {/* MATCHES PLAYED */}
+          <View className="w-[48%] flex-row items-center justify-between rounded-2xl border border-cardBorder bg-card p-3.5">
+            <View>
+              <Text className="font-orbitron-black text-lg text-text-main">
+                143 : 99
+              </Text>
+              <Text className="font-rajdhani text-xs uppercase text-text-muted">
+                WIN : LOSS
+              </Text>
+            </View>
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-badge-teal/20">
+              <Text className="text-base">⚖️</Text>
+            </View>
+          </View>
+        </View>
+
+        {/* 5. FEATURED TOURNAMENT CARD */}
+        <View className="rounded-2xl border border-cardBorder bg-card p-4">
+          <View className="flex-row items-center gap-2">
+            <View className="h-2 w-2 rounded-full bg-accentGreen" />
+            <Text className="font-rajdhani-bold text-xs uppercase tracking-wider text-text-muted">
+              FEATURED EVENT
+            </Text>
+          </View>
+          <Text className="mt-2 font-orbitron-black text-lg text-text-main">
+            Championship Season 4
           </Text>
           <Text className="mt-1 font-rajdhani text-xs text-text-muted">
-            Pool Prize: 50,000 NEURO TOKENS • 128 Squads Remaining
+            Prize Pool: $50,000 • 128 Squads Remaining
           </Text>
         </View>
       </ScrollView>

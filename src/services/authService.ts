@@ -24,7 +24,7 @@ export const authService = {
         token: 'mock_jwt_admin_token_999',
         user: {
           id: 'usr_admin',
-          username: 'CYBER_ADMIN',
+          username: 'Alex',
           email: credentials.email,
         },
       };

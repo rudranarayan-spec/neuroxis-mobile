@@ -9,17 +9,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
-        background: '#090D16', // Deep Obsidian Black
-        card: '#121824',       // Dark Cyber Surface
-        cardBorder: '#1F293D', // Muted Border
-        neon: {
-          light: '#39FF14',   // Cyber Neon Green
-          DEFAULT: '#00FF66', // Core Gaming Green
-          dark: '#00C853',    // Dark Green Accent
-        },
+        // Matiks Matte Dark Palette
+        background: '#121212', // Pure Dark Matte (Not obsidian/blue)
+        card: '#1C1C1E',       // Raised Card Surface
+        cardBorder: '#2C2C2E', // Subtle Gray Border
+        accentGreen: '#B5F23D',// Soft Lime/Neon Green (used sparingly for active states)
         text: {
-          main: '#F3F4F6',    // Off-white primary text
-          muted: '#9CA3AF',   // Muted secondary text
+          main: '#FFFFFF',     // Crisp White Text
+          muted: '#8E8E93',    // iOS System Gray Muted Text
+        },
+        // Category Badge Colors (from image)
+        badge: {
+          purple: '#8B5CF6',
+          teal: '#2DD4BF',
+          green: '#22C55E',
+          yellow: '#EAB308',
         },
       },
       fontFamily: {
