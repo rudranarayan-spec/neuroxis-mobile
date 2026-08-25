@@ -72,4 +72,13 @@ export const showToast = {
       topOffset: 50,
     });
   },
+  info: (title: string, message?: string) => {
+    Toast.show({
+      type: 'warning',
+      text1: title,
+      text2: message,
+      position: 'top',
+      topOffset: 50,
+    });
+  },
 };

@@ -1,71 +1,70 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
-import Svg, { Path } from 'react-native-svg';
+import {
+  User,
+  Shield,
+  Bell,
+  LogOut,
+  ChevronRight,
+  Share2,
+  MessageSquare,
+  Trophy,
+  Settings,
+  Bug,
+  Star,
+} from 'lucide-react-native';
+
 import { ScreenContainer } from '../../src/components/ScreenContainer';
 import { useAuth } from '../../src/context/AuthContext';
-import { COLORS, FONTS } from '../../src/constants/theme'; 
-
-// SVG Icons
-const UserIcon = ({ size = 18, color = COLORS.textMuted }: { size?: number; color?: string }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-    <Path d="M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z" />
-  </Svg>
-);
-
-const ShieldIcon = ({ size = 18, color = COLORS.textMuted }: { size?: number; color?: string }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-  </Svg>
-);
-
-const BellIcon = ({ size = 18, color = COLORS.textMuted }: { size?: number; color?: string }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
-    <Path d="M13.73 21a2 2 0 0 1-3.46 0" />
-  </Svg>
-);
-
-const ChevronRightIcon = ({ size = 16, color = COLORS.secondary }: { size?: number; color?: string }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M9 18l6-6-6-6" />
-  </Svg>
-);
-
-const LogOutIcon = ({ size = 18, color = COLORS.danger }: { size?: number; color?: string }) => (
-  <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-    <Path d="M16 17l5-5-5-5" />
-    <Path d="M21 12H9" />
-  </Svg>
-);
+import { useConfirm } from '../../src/context/ConfirmContext';
+import { showToast } from '../../src/config/toastConfig';
+import { COLORS, FONTS } from '../../src/constants/theme';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
+  const { confirm } = useConfirm();
   const router = useRouter();
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to terminate your session?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
+  const handleLogout = async () => {
+    const isConfirmed = await confirm({
+      title: 'TERMINATE SESSION',
+      message: 'Are you sure you want to disconnect from the Neuroxis network?',
+      confirmText: 'DISCONNECT',
+      cancelText: 'ABORT',
+      isDanger: true,
+    });
+
+    if (isConfirmed) {
+      await logout();
+      showToast.success('SESSION TERMINATED', 'Disconnected successfully.');
+      router.replace('/(auth)/login');
+    }
   };
+
+  const handleAction = (label: string) => {
+    showToast.info('FEATURE LOCKED', `${label} integration coming in next patch.`);
+  };
+
+  const hubItems = [
+    { label: 'Referral', icon: Share2, action: () => handleAction('Referral') },
+    { label: 'Discord', icon: MessageSquare, action: () => handleAction('Discord') },
+    { label: 'Leaderboard', icon: Trophy, action: () => handleAction('Leaderboard') },
+    { label: 'Settings', icon: Settings, action: () => handleAction('Settings') },
+    { label: 'Report Bug', icon: Bug, action: () => handleAction('Bug Report') },
+    { label: 'Rate App', icon: Star, action: () => handleAction('Rating') },
+  ];
 
   return (
     <ScreenContainer style={{ backgroundColor: COLORS.background }} className="px-4 sm:px-6">
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 36 }}>
-        {/* Header Label */}
-        <View className="mb-4 mt-3">
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 60 }}
+      >
+        {/* Header Section */}
+        <View className="mb-5 mt-3">
           <Text
-            style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.primary }}
+            style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMuted }}
             className="text-[11px] uppercase tracking-[0.25em]"
           >
             SYSTEM_IDENTITY
@@ -78,109 +77,121 @@ export default function ProfileScreen() {
           </Text>
         </View>
 
-        {/* User Card */}
+        {/* User Identity Card */}
         <View
           style={{
             backgroundColor: COLORS.card,
             borderColor: COLORS.cardBorder,
           }}
-          className="mb-6 rounded-3xl border p-6 items-center shadow-xl"
+          className="mb-6 rounded-3xl border p-5 sm:p-6 items-center shadow-2xl"
         >
           {/* Avatar Ring */}
           <View
             style={{
-              borderColor: COLORS.primary,
+              borderColor: COLORS.cardBorder,
               backgroundColor: COLORS.inputBg,
-              shadowColor: COLORS.primary,
             }}
-            className="h-24 w-24 items-center justify-center rounded-full border-2 shadow-md"
+            className="h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-2xl border-2 relative"
           >
             <Text
-              style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.primary }}
-              className="text-3xl"
+              style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
+              className="text-2xl sm:text-3xl"
             >
-              {user?.username?.substring(0, 2).toUpperCase() || 'P1'}
+              {user?.username?.substring(0, 2).toUpperCase() || 'OP'}
             </Text>
+            {/* Status Indicator */}
+            <View
+              style={{ backgroundColor: COLORS.primary }}
+              className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-background"
+            />
           </View>
 
           {/* User Meta */}
           <Text
             style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
-            className="mt-4 text-xl"
+            className="mt-3 text-lg sm:text-xl text-center"
+            numberOfLines={1}
           >
-            {user?.username || 'Player One'}
+            {user?.username || 'Operator One'}
           </Text>
           <Text
             style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
-            className="mt-0.5 text-xs tracking-wider"
+            className="mt-0.5 text-xs tracking-wider text-center"
+            numberOfLines={1}
           >
-            {user?.email || 'player@game.com'}
+            {user?.email || 'operator@matiks.net'}
           </Text>
 
-          {/* Player Badge */}
+          {/* Tier Badge */}
           <View
             style={{
-              backgroundColor: `${COLORS.primary}15`,
-              borderColor: `${COLORS.primary}40`,
+              backgroundColor: `${COLORS.cardBorder}60`,
+              borderColor: COLORS.cardBorder,
             }}
             className="mt-3 rounded-full border px-3 py-1"
           >
             <Text
-              style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.primary }}
+              style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMain }}
               className="text-[10px] uppercase tracking-widest"
             >
-              ● TIER 1 OPERATOR
+              LEVEL 42 OPERATOR
             </Text>
           </View>
 
-          {/* Quick Combat Stats Overview */}
+          {/* Combat & System Stats Grid */}
           <View
             style={{
               backgroundColor: COLORS.inputBg,
               borderColor: `${COLORS.cardBorder}80`,
             }}
-            className="mt-6 flex-row w-full justify-between rounded-2xl border p-3.5"
+            className="mt-5 flex-row w-full justify-between rounded-2xl border p-3.5"
           >
-            <View className="flex-1 items-center">
+            <View className="flex-1 items-center px-1">
               <Text
                 style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
-                className="text-[11px]"
+                className="text-[10px] uppercase"
+                numberOfLines={1}
               >
                 MATCHES
               </Text>
               <Text
                 style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
-                className="mt-0.5 text-base"
+                className="mt-0.5 text-sm sm:text-base"
+                numberOfLines={1}
               >
                 142
               </Text>
             </View>
 
-            <View className="flex-1 items-center border-x border-cardBorder/40">
+            <View className="flex-1 items-center border-x border-cardBorder/40 px-1">
               <Text
                 style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
-                className="text-[11px]"
+                className="text-[10px] uppercase"
+                numberOfLines={1}
               >
                 WIN RATE
               </Text>
               <Text
                 style={{ fontFamily: FONTS.orbitronBold, color: COLORS.primary }}
-                className="mt-0.5 text-base"
+                className="mt-0.5 text-sm sm:text-base"
+                numberOfLines={1}
               >
                 68.4%
               </Text>
             </View>
 
-            <View className="flex-1 items-center">
+            <View className="flex-1 items-center px-1">
               <Text
                 style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
-                className="text-[11px]"
+                className="text-[10px] uppercase"
+                numberOfLines={1}
               >
                 RANK
               </Text>
               <Text
                 style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
-                className="mt-0.5 text-base"
+                className="mt-0.5 text-sm sm:text-base"
+                numberOfLines={1}
               >
                 #412
               </Text>
@@ -188,12 +199,51 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* Account Settings List */}
+        {/* Quick Hub - Grid Action Buttons */}
         <Text
           style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMuted }}
           className="mb-3 text-[11px] uppercase tracking-widest"
         >
-          CONFIGURATION & SECURITY
+          OPERATOR HUB
+        </Text>
+
+        <View className="mb-6 flex-row flex-wrap justify-between gap-y-3">
+          {hubItems.map((item, idx) => {
+            const IconComponent = item.icon;
+            return (
+              <TouchableOpacity
+                key={idx}
+                onPress={item.action}
+                style={{
+                  backgroundColor: COLORS.card,
+                  borderColor: COLORS.cardBorder,
+                }}
+                className="w-[31%] min-h-[90px] items-center justify-center rounded-2xl border py-3 px-1 active:opacity-70"
+              >
+                <View
+                  style={{ backgroundColor: COLORS.inputBg }}
+                  className="mb-1.5 p-2 sm:p-2.5 rounded-xl border border-cardBorder/40"
+                >
+                  <IconComponent size={18} color={COLORS.textMain} />
+                </View>
+                <Text
+                  style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMain }}
+                  className="text-center text-[11px] sm:text-xs"
+                  numberOfLines={1}
+                >
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        {/* Security & Account List */}
+        <Text
+          style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMuted }}
+          className="mb-3 text-[11px] uppercase tracking-widest"
+        >
+          SECURITY & PREFERENCES
         </Text>
 
         <View
@@ -201,91 +251,67 @@ export default function ProfileScreen() {
             backgroundColor: COLORS.card,
             borderColor: COLORS.cardBorder,
           }}
-          className="mb-6 overflow-hidden rounded-3xl border"
+          className="mb-6 overflow-hidden rounded-2xl border"
         >
-          {/* Item 1 */}
           <TouchableOpacity
             style={{ borderColor: COLORS.cardBorder }}
-            className="flex-row items-center justify-between border-b p-4 active:opacity-80"
+            className="flex-row min-h-[52px] items-center justify-between border-b p-4 active:opacity-80"
           >
-            <View className="flex-row items-center gap-3">
-              <UserIcon size={18} color={COLORS.primary} />
+            <View className="flex-row items-center gap-3 flex-1 pr-2">
+              <User size={18} color={COLORS.textMuted} />
               <Text
                 style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMain }}
                 className="text-sm"
+                numberOfLines={1}
               >
-                Account Settings
+                Account Details
               </Text>
             </View>
-            <View className="flex-row items-center gap-1.5">
-              <Text
-                style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
-                className="text-xs"
-              >
-                Edit Profile
-              </Text>
-              <ChevronRightIcon size={16} color={COLORS.secondary} />
-            </View>
+            <ChevronRight size={16} color={COLORS.textMuted} />
           </TouchableOpacity>
 
-          {/* Item 2 */}
           <TouchableOpacity
             style={{ borderColor: COLORS.cardBorder }}
-            className="flex-row items-center justify-between border-b p-4 active:opacity-80"
+            className="flex-row min-h-[52px] items-center justify-between border-b p-4 active:opacity-80"
           >
-            <View className="flex-row items-center gap-3">
-              <ShieldIcon size={18} color={COLORS.primary} />
+            <View className="flex-row items-center gap-3 flex-1 pr-2">
+              <Shield size={18} color={COLORS.textMuted} />
               <Text
                 style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMain }}
                 className="text-sm"
+                numberOfLines={1}
               >
-                Security & Password
+                Security Credentials
               </Text>
             </View>
-            <View className="flex-row items-center gap-1.5">
-              <Text
-                style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
-                className="text-xs"
-              >
-                Protected
-              </Text>
-              <ChevronRightIcon size={16} color={COLORS.secondary} />
-            </View>
+            <ChevronRight size={16} color={COLORS.textMuted} />
           </TouchableOpacity>
 
-          {/* Item 3 */}
-          <TouchableOpacity className="flex-row items-center justify-between p-4 active:opacity-80">
-            <View className="flex-row items-center gap-3">
-              <BellIcon size={18} color={COLORS.primary} />
+          <TouchableOpacity className="flex-row min-h-[52px] items-center justify-between p-4 active:opacity-80">
+            <View className="flex-row items-center gap-3 flex-1 pr-2">
+              <Bell size={18} color={COLORS.textMuted} />
               <Text
                 style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMain }}
                 className="text-sm"
+                numberOfLines={1}
               >
                 Notifications
               </Text>
             </View>
-            <View className="flex-row items-center gap-1.5">
-              <Text
-                style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
-                className="text-xs"
-              >
-                Enabled
-              </Text>
-              <ChevronRightIcon size={16} color={COLORS.secondary} />
-            </View>
+            <ChevronRight size={16} color={COLORS.textMuted} />
           </TouchableOpacity>
         </View>
 
-        {/* Log Out CTA Button */}
+        {/* Terminate Session CTA */}
         <TouchableOpacity
           onPress={handleLogout}
           style={{
-            backgroundColor: `${COLORS.danger}15`,
-            borderColor: COLORS.danger,
+            backgroundColor: `${COLORS.danger}10`,
+            borderColor: `${COLORS.danger}40`,
           }}
-          className="flex-row items-center justify-center gap-2 rounded-2xl border py-4 active:opacity-80"
+          className="flex-row min-h-[52px] items-center justify-center gap-2 rounded-2xl border py-3.5 active:opacity-80"
         >
-          <LogOutIcon size={18} color={COLORS.danger} />
+          <LogOut size={18} color={COLORS.danger} />
           <Text
             style={{ fontFamily: FONTS.orbitronBold, color: COLORS.danger }}
             className="text-xs uppercase tracking-widest"

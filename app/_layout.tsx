@@ -10,6 +10,7 @@ import { useFonts, Orbitron_700Bold, Orbitron_900Black } from '@expo-google-font
 import { Rajdhani_500Medium, Rajdhani_700Bold } from '@expo-google-fonts/rajdhani';
 import { CustomSplashScreen } from '../src/components/SplashScreen';
 import { AuthProvider, useAuth } from '../src/context/AuthContext';
+import { ConfirmProvider } from '../src/context/ConfirmContext';
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
+          <ConfirmProvider>
           <StatusBar style="light" backgroundColor="#121212" translucent />
           <View className="flex-1 bg-background">
             <InitialLayout />
@@ -82,6 +84,7 @@ export default function RootLayout() {
               </View>
             )}
           </View>
+          </ConfirmProvider>
         </AuthProvider>
       </QueryClientProvider>
     </SafeAreaProvider>
