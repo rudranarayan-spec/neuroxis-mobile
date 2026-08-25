@@ -1,35 +1,14 @@
-export interface LoginPayload {
-  email: string;
-  passcode: string;
-}
-
-export interface AuthResponse {
-  token: string;
-  user: {
-    id: string;
-    username: string;
-    email: string;
-  };
-}
+import { apiClient } from '../config/apiClient';
+import { AuthResponse, LoginPayload, RegisterPayload } from '../types/auth';
 
 export const authService = {
-  login: async (credentials: LoginPayload): Promise<AuthResponse> => {
-    await new Promise((resolve) => setTimeout(resolve, 800));
+  async register(payload: RegisterPayload): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/auth/register', payload);
+    return response.data;
+  },
 
-    if (
-      credentials.email === 'admin@admin.com' &&
-      credentials.passcode === 'AdminPass'
-    ) {
-      return {
-        token: 'mock_jwt_admin_token_999',
-        user: {
-          id: 'usr_admin',
-          username: 'Alex',
-          email: credentials.email,
-        },
-      };
-    }
-
-    throw new Error('Invalid credentials! Use admin@admin.com / AdminPass');
+  async login(payload: LoginPayload): Promise<AuthResponse> {
+    const response = await apiClient.post<AuthResponse>('/auth/login', payload);
+    return response.data;
   },
 };

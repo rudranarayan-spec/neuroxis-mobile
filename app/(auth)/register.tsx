@@ -1,104 +1,162 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../../src/components/ScreenContainer';
-import { CyberInput } from '../../src/components/CyberInput';
 import { useAuth } from '../../src/context/AuthContext';
+import { COLORS } from '../../src/constants/theme';
+import { showToast } from '../../src/config/toastConfig';
 
-export default function RegisterScreen() {
+export default function SignupScreen() {
   const router = useRouter();
   const { register } = useAuth();
 
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [region, setRegion] = useState('INDIA');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  const handleRegister = async () => {
-    if (!username || !email || !password) {
-      setError('Please fill in all fields');
+  const handleSignup = async () => {
+    if (!username || !email || !password || !region) {
+      showToast.error('MISSING_DATA', 'Please complete all required fields.');
       return;
     }
+
     try {
       setLoading(true);
-      setError('');
-      await register(username, email, password);
+      await register({
+        username: username.trim(),
+        email: email.trim(),
+        password,
+        region: region.trim(),
+      });
+      showToast.success('ACCOUNT_CREATED', 'Identity successfully initialized.');
       router.replace('/(tabs)');
-    } catch (err: any) {
-      setError(err.message || 'Registration failed. Try again.');
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'Registration failed. Try again.';
+      showToast.error('REGISTRATION_FAILED', msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScreenContainer className="bg-background px-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} showsVerticalScrollIndicator={false}>
-        {/* Header */}
-        <View className="mb-8">
-          <Text className="font-orbitron-black text-3xl font-bold text-text-main">
-            CREATE <Text className="text-accentGreen">ACCOUNT</Text>
-          </Text>
-          <Text className="mt-1 font-rajdhani text-sm text-text-muted">
-            Join the arena and track your competitive progress
-          </Text>
-        </View>
-
-        {/* Form Card */}
-        <View className="rounded-2xl border border-cardBorder bg-card p-5">
-          {error ? (
-            <View className="mb-4 rounded-xl bg-red-500/10 p-3 border border-red-500/20">
-              <Text className="font-rajdhani text-xs text-red-400">{error}</Text>
+    <ScreenContainer className="bg-background">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}
+          showsVerticalScrollIndicator={false}
+          className="px-6 py-8"
+        >
+          {/* Centered Responsive Card Container */}
+          <View className="w-full max-w-md rounded-2xl border p-6" style={{ backgroundColor: COLORS.card, borderColor: COLORS.cardBorder }}>
+            {/* Header */}
+            <View className="mb-6 items-center text-center">
+              <Text className="font-rajdhani-bold text-xs uppercase tracking-[0.25em]" style={{ color: COLORS.primary }}>
+                INITIALIZE_ACCOUNT
+              </Text>
+              <Text className="mt-1 font-orbitron-black text-2xl font-bold" style={{ color: COLORS.textMain }}>
+                CREATE <Text style={{ color: COLORS.primary }}>IDENTITY</Text>
+              </Text>
+              <Text className="mt-1.5 text-center font-rajdhani text-sm" style={{ color: COLORS.textMuted }}>
+                Join the network to compete and track statistics.
+              </Text>
             </View>
-          ) : null}
 
-          <CyberInput
-            label="Gamer Tag / Username"
-            placeholder="PlayerOne"
-            value={username}
-            onChangeText={setUsername}
-            autoCapitalize="none"
-          />
+            {/* Form Fields */}
+            <View className="space-y-3">
+              <View>
+                <Text className="mb-1 font-rajdhani-bold text-xs uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+                  Username
+                </Text>
+                <TextInput
+                  value={username}
+                  onChangeText={setUsername}
+                  placeholder="admin"
+                  placeholderTextColor="#52525B"
+                  autoCapitalize="none"
+                  className="w-full rounded-xl border px-4 py-2.5 font-rajdhani font-semibold text-white"
+                  style={{ backgroundColor: COLORS.inputBg, borderColor: COLORS.cardBorder }}
+                />
+              </View>
 
-          <CyberInput
-            label="Email Address"
-            placeholder="player@domain.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+              <View className="mt-2">
+                <Text className="mb-1 font-rajdhani-bold text-xs uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+                  Email Address
+                </Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="rudra@admin.com"
+                  placeholderTextColor="#52525B"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  className="w-full rounded-xl border px-4 py-2.5 font-rajdhani font-semibold text-white"
+                  style={{ backgroundColor: COLORS.inputBg, borderColor: COLORS.cardBorder }}
+                />
+              </View>
 
-          <CyberInput
-            label="Password"
-            placeholder="••••••••"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+              <View className="mt-2">
+                <Text className="mb-1 font-rajdhani-bold text-xs uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+                  Password
+                </Text>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="••••••••"
+                  placeholderTextColor="#52525B"
+                  secureTextEntry
+                  className="w-full rounded-xl border px-4 py-2.5 font-rajdhani font-semibold text-white"
+                  style={{ backgroundColor: COLORS.inputBg, borderColor: COLORS.cardBorder }}
+                />
+              </View>
 
-          <TouchableOpacity
-            onPress={handleRegister}
-            disabled={loading}
-            className="mt-2 items-center justify-center rounded-xl bg-accentGreen py-3.5 active:opacity-90"
-          >
-            {loading ? (
-              <ActivityIndicator color="#121212" />
-            ) : (
-              <Text className="font-orbitron text-xs font-bold text-background">REGISTER</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+              <View className="mt-2">
+                <Text className="mb-1 font-rajdhani-bold text-xs uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+                  Region
+                </Text>
+                <TextInput
+                  value={region}
+                  onChangeText={setRegion}
+                  placeholder="INDIA"
+                  placeholderTextColor="#52525B"
+                  autoCapitalize="characters"
+                  className="w-full rounded-xl border px-4 py-2.5 font-rajdhani font-semibold text-white"
+                  style={{ backgroundColor: COLORS.inputBg, borderColor: COLORS.cardBorder }}
+                />
+              </View>
+            </View>
 
-        {/* Footer Link */}
-        <View className="mt-6 flex-row justify-center">
-          <Text className="font-rajdhani text-sm text-text-muted">Already registered? </Text>
-          <TouchableOpacity onPress={() => router.back()}>
-            <Text className="font-rajdhani-bold text-sm text-accentGreen">Log In</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+            {/* Action Button */}
+            <TouchableOpacity
+              onPress={handleSignup}
+              disabled={loading}
+              className="mt-6 w-full items-center justify-center rounded-xl py-3.5 active:opacity-90"
+              style={{ backgroundColor: COLORS.primary }}
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.background} size="small" />
+              ) : (
+                <Text className="font-orbitron text-xs font-bold uppercase" style={{ color: COLORS.background }}>
+                  SIGN UP
+                </Text>
+              )}
+            </TouchableOpacity>
+
+            {/* Footer Navigation */}
+            <View className="mt-5 flex-row justify-center gap-1">
+              <Text className="font-rajdhani text-sm" style={{ color: COLORS.textMuted }}>
+                Already registered?
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/login')}>
+                <Text className="font-rajdhani-bold text-sm font-bold" style={{ color: COLORS.primary }}>
+                  Sign In
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }

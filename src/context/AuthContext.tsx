@@ -1,86 +1,113 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
-import * as SecureStore from 'expo-secure-store';
-
-interface User {
-  id: string;
-  username: string;
-  email: string;
-}
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { tokenStorage } from '../utils/tokenStorage';
+import { authService } from '../services/authService';
+import { AuthResponse, LoginPayload, RegisterPayload, User } from '../types/auth';
 
 interface AuthContextType {
-  user: User | null;
   token: string | null;
+  user: User | null;
   isLoading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (username: string, email: string, password: string) => Promise<void>;
+  login: (payload: LoginPayload) => Promise<AuthResponse>;
+  register: (payload: RegisterPayload) => Promise<AuthResponse>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+// Development logger helper
+const logDevAuthAction = (action: string, data: any) => {
+  if (__DEV__) {
+    console.log(`\x1b[36m[AUTH DEV LOG] ---> ${action}\x1b[0m`, JSON.stringify(data, null, 2));
+  }
+};
+
+export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  const queryClient = useQueryClient();
+
+  // Restore stored token on app launch
   useEffect(() => {
-    const loadStoredAuth = async () => {
+    async function loadStoredAuth() {
       try {
-        const storedToken = await SecureStore.getItemAsync('userToken');
-        const storedUser = await SecureStore.getItemAsync('userData');
-        if (storedToken && storedUser) {
+        const storedToken = await tokenStorage.getToken();
+        logDevAuthAction('RESTORE_SESSION_CHECK', { hasToken: !!storedToken });
+        if (storedToken) {
           setToken(storedToken);
-          setUser(JSON.parse(storedUser));
         }
       } catch (error) {
-        console.error('Failed to load auth credentials:', error);
+        console.error('Failed to restore auth token:', error);
       } finally {
         setIsLoading(false);
       }
-    };
+    }
     loadStoredAuth();
   }, []);
 
-  const login = async (email: string, password: string) => {
-    // Replace this logic with your backend API call if needed
-    const mockUser: User = { id: '1', username: email.split('@')[0], email };
-    const mockToken = 'mock-jwt-token';
+  // Login Mutation
+  const loginMutation = useMutation({
+    mutationFn: async (payload: LoginPayload) => {
+      logDevAuthAction('LOGIN_REQUEST', { email: payload.email });
+      return await authService.login(payload);
+    },
+    onSuccess: async (data) => {
+      logDevAuthAction('LOGIN_SUCCESS', { userId: data.user.id, username: data.user.username });
+      await tokenStorage.setToken(data.token);
+      setToken(data.token);
+      setUser(data.user);
+    },
+    onError: (error: any) => {
+      logDevAuthAction('LOGIN_ERROR', error.response?.data || error.message);
+    },
+  });
 
-    setToken(mockToken);
-    setUser(mockUser);
-    await SecureStore.setItemAsync('userToken', mockToken);
-    await SecureStore.setItemAsync('userData', JSON.stringify(mockUser));
+  // Register Mutation
+  const registerMutation = useMutation({
+    mutationFn: async (payload: RegisterPayload) => {
+      logDevAuthAction('REGISTER_REQUEST', { email: payload.email, username: payload.username });
+      return await authService.register(payload);
+    },
+    onSuccess: async (data) => {
+      logDevAuthAction('REGISTER_SUCCESS', { userId: data.user.id, username: data.user.username });
+      await tokenStorage.setToken(data.token);
+      setToken(data.token);
+      setUser(data.user);
+    },
+    onError: (error: any) => {
+      logDevAuthAction('REGISTER_ERROR', error.response?.data || error.message);
+    },
+  });
+
+  const login = async (payload: LoginPayload) => {
+    return await loginMutation.mutateAsync(payload);
   };
 
-  const register = async (username: string, email: string, password: string) => {
-    // Replace this logic with your backend API call if needed
-    const mockUser: User = { id: Date.now().toString(), username, email };
-    const mockToken = 'mock-jwt-token';
-
-    setToken(mockToken);
-    setUser(mockUser);
-    await SecureStore.setItemAsync('userToken', mockToken);
-    await SecureStore.setItemAsync('userData', JSON.stringify(mockUser));
+  const register = async (payload: RegisterPayload) => {
+    return await registerMutation.mutateAsync(payload);
   };
 
   const logout = async () => {
+    logDevAuthAction('LOGOUT', { userId: user?.id });
+    await tokenStorage.removeToken();
     setToken(null);
     setUser(null);
-    await SecureStore.deleteItemAsync('userToken');
-    await SecureStore.deleteItemAsync('userData');
+    queryClient.clear(); // Clear cached queries on sign out
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, isLoading, login, register, logout }}>
+    <AuthContext.Provider value={{ token, user, isLoading, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
-};
+}

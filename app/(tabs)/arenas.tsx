@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Modal, Dimensions } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import Svg, { Path } from 'react-native-svg';
 import { ScreenContainer } from '../../src/components/ScreenContainer';
 import { tabDataService } from '../../src/services/tabDataService';
+import { COLORS, FONTS } from '../../src/constants/theme';
+
+const { width } = Dimensions.get('window');
+
+// Responsive utility sizes based on screen width
+const isSmallDevice = width < 380;
 
 // Crossed Swords Icon
-const CrossedSwordsIcon = ({ size = 20, color = "#B5F23D" }: { size?: number; color?: string }) => (
+const CrossedSwordsIcon = ({ size = 20, color = COLORS.primary }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M14.5 17.5L3 6V3h3l11.5 11.5" />
     <Path d="M13 19l6 2 2-6-2.5-2.5" />
@@ -15,7 +21,7 @@ const CrossedSwordsIcon = ({ size = 20, color = "#B5F23D" }: { size?: number; co
   </Svg>
 );
 
-const CloseIcon = ({ size = 20, color = "#FFFFFF" }: { size?: number; color?: string }) => (
+const CloseIcon = ({ size = 20, color = COLORS.textMain }: { size?: number; color?: string }) => (
   <Svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <Path d="M18 6L6 18" />
     <Path d="M6 6l12 12" />
@@ -45,46 +51,58 @@ export default function ArenasScreen() {
   };
 
   return (
-    <ScreenContainer className="bg-background px-5">
+    <ScreenContainer style={{ backgroundColor: COLORS.background }} className="px-4 sm:px-6">
       {/* Header */}
-      <View className="mb-5 mt-2 flex-row items-center justify-between">
-        <View className="flex-1">
-          <Text className="font-rajdhani-bold text-xs uppercase tracking-[0.2em] text-accentGreen">
+      <View className="mb-6 mt-3 flex-row items-center justify-between">
+        <View className="flex-1 pr-3">
+          <Text
+            style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.primary }}
+            className="text-[11px] uppercase tracking-[0.25em]"
+          >
             ARENA_SELECTION
           </Text>
-          <Text className="mt-0.5 font-orbitron-black text-2xl font-bold text-text-main">
-            ACTIVE <Text className="text-accentGreen">CHALLENGES</Text>
+          <Text
+            style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
+            className="mt-1 text-2xl sm:text-3xl"
+          >
+            ACTIVE <Text style={{ color: COLORS.primary }}>CHALLENGES</Text>
           </Text>
         </View>
 
-        {/* Crossed Swords Button to Trigger New Challenge Modal */}
+        {/* Crossed Swords Button - Modernized Dark Glass & Primary Accent */}
         <TouchableOpacity
           onPress={() => setIsModalOpen(true)}
-          className="h-11 w-11 items-center justify-center rounded-xl border border-accentGreen/30 bg-accentGreen/10 active:opacity-80"
-          activeOpacity={0.7}
+          style={{
+            backgroundColor: `${COLORS.primary}12`,
+            borderColor: `${COLORS.primary}40`,
+          }}
+          className="h-12 w-12 items-center justify-center rounded-2xl border active:scale-95"
+          activeOpacity={0.8}
         >
-          <CrossedSwordsIcon size={22} color="#B5F23D" />
+          <CrossedSwordsIcon size={22} color={COLORS.primary} />
         </TouchableOpacity>
       </View>
 
       {/* Filter Tabs */}
-      <View className="mb-5 flex-row gap-2">
+      <View className="mb-6 flex-row gap-2.5">
         {(['ALL', 'LIVE', 'UPCOMING'] as const).map((filter) => {
           const isActive = activeFilter === filter;
           return (
             <TouchableOpacity
               key={filter}
               onPress={() => setActiveFilter(filter)}
-              className={`rounded-xl px-4 py-2 border transition-all ${
-                isActive
-                  ? 'border-accentGreen bg-accentGreen/10'
-                  : 'border-cardBorder bg-card'
-              }`}
+              style={{
+                backgroundColor: isActive ? `${COLORS.primary}1A` : COLORS.card,
+                borderColor: isActive ? COLORS.primary : COLORS.cardBorder,
+              }}
+              className="rounded-xl border px-4 py-2.5 active:opacity-90"
             >
               <Text
-                className={`font-rajdhani-bold text-xs font-semibold ${
-                  isActive ? 'text-accentGreen' : 'text-text-muted'
-                }`}
+                style={{
+                  fontFamily: FONTS.rajdhaniBold,
+                  color: isActive ? COLORS.primary : COLORS.textMuted,
+                }}
+                className="text-xs tracking-wider"
               >
                 {filter}
               </Text>
@@ -95,80 +113,140 @@ export default function ArenasScreen() {
 
       {/* Arenas / Challenges List */}
       {isLoading ? (
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator color="#B5F23D" size="large" />
+        <View className="flex-1 items-center justify-center py-20">
+          <ActivityIndicator color={COLORS.primary} size="large" />
         </View>
       ) : (
         <ScrollView
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingBottom: 24 }}
+          contentContainerStyle={{ paddingBottom: 32 }}
         >
           {filteredArenas.map((item) => (
             <View
               key={item.id}
-              className="mb-4 rounded-2xl border border-cardBorder bg-card p-4 shadow-sm"
+              style={{
+                backgroundColor: COLORS.card,
+                borderColor: COLORS.cardBorder,
+              }}
+              className="mb-4 rounded-3xl border p-4 sm:p-5 shadow-lg"
             >
               {/* Card Header Tag */}
-              <View className="flex-row items-center justify-between border-b border-cardBorder pb-3">
-                <Text className="font-rajdhani-bold text-[11px] uppercase tracking-wider text-text-muted">
+              <View
+                style={{ borderColor: COLORS.cardBorder }}
+                className="flex-row items-center justify-between border-b pb-3"
+              >
+                <Text
+                  style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMuted }}
+                  className="text-[11px] uppercase tracking-widest"
+                >
                   {item.category || 'CHALLENGE'}
                 </Text>
+
                 <View
-                  className={`rounded-lg px-2.5 py-1 border ${
-                    item.status === 'LIVE'
-                      ? 'border-accentGreen/30 bg-accentGreen/10'
-                      : 'border-cardBorder bg-background'
-                  }`}
+                  style={{
+                    backgroundColor: item.status === 'LIVE' ? `${COLORS.primary}15` : COLORS.inputBg,
+                    borderColor: item.status === 'LIVE' ? `${COLORS.primary}40` : COLORS.cardBorder,
+                  }}
+                  className="rounded-full border px-3 py-1"
                 >
                   <Text
-                    className={`font-rajdhani-bold text-[10px] font-bold ${
-                      item.status === 'LIVE' ? 'text-accentGreen' : 'text-text-muted'
-                    }`}
+                    style={{
+                      fontFamily: FONTS.rajdhaniBold,
+                      color: item.status === 'LIVE' ? COLORS.primary : COLORS.secondary,
+                    }}
+                    className="text-[10px] tracking-wider"
                   >
-                    {item.status}
+                    {item.status === 'LIVE' ? '● LIVE NOW' : item.status}
                   </Text>
                 </View>
               </View>
 
               {/* Tournament Title */}
-              <Text className="mt-3 font-orbitron text-base font-bold text-text-main">
+              <Text
+                style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
+                className="mt-3.5 text-base sm:text-lg"
+              >
                 {item.title}
               </Text>
 
               {/* Key Metrics Grid */}
-              <View className="my-4 flex-row justify-between rounded-xl border border-cardBorder bg-background/50 p-3">
-                <View>
-                  <Text className="font-rajdhani text-[11px] text-text-muted">Prize Pool</Text>
-                  <Text className="font-orbitron text-sm font-bold text-accentGreen">
+              <View
+                style={{
+                  backgroundColor: COLORS.inputBg,
+                  borderColor: `${COLORS.cardBorder}80`,
+                }}
+                className="my-4 flex-row justify-between rounded-2xl border p-3.5"
+              >
+                <View className="flex-1">
+                  <Text
+                    style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
+                    className="text-[11px]"
+                  >
+                    Prize Pool
+                  </Text>
+                  <Text
+                    style={{ fontFamily: FONTS.orbitronBold, color: COLORS.primary }}
+                    className="mt-0.5 text-sm sm:text-base"
+                  >
                     {item.prizePool}
                   </Text>
                 </View>
-                <View>
-                  <Text className="font-rajdhani text-[11px] text-text-muted">Entry Fee</Text>
-                  <Text className="font-orbitron text-sm font-bold text-text-main">
+
+                <View className="flex-1 items-center border-x border-cardBorder/40 px-2">
+                  <Text
+                    style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
+                    className="text-[11px]"
+                  >
+                    Entry Fee
+                  </Text>
+                  <Text
+                    style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
+                    className="mt-0.5 text-sm sm:text-base"
+                  >
                     {item.entryFee}
                   </Text>
                 </View>
-                <View>
-                  <Text className="font-rajdhani text-[11px] text-text-muted">Slots</Text>
-                  <Text className="font-orbitron text-sm font-bold text-text-main">
+
+                <View className="flex-1 items-end">
+                  <Text
+                    style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
+                    className="text-[11px]"
+                  >
+                    Slots
+                  </Text>
+                  <Text
+                    style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
+                    className="mt-0.5 text-sm sm:text-base"
+                  >
                     {item.players}
                   </Text>
                 </View>
               </View>
 
-              {/* Join Action Button */}
+              {/* Replaced High-Contrast Solid Lime with Modern Dark-Glass + Glowing Accent Border Button */}
               <TouchableOpacity
                 onPress={() => handleJoin(item.id)}
                 disabled={joiningId === item.id}
-                className="w-full items-center justify-center rounded-xl bg-accentGreen py-3 active:opacity-90"
+                style={{
+                  backgroundColor: `${COLORS.primary}15`,
+                  borderColor: COLORS.primary,
+                }}
+                className="w-full items-center justify-center rounded-2xl border py-3.5 active:opacity-80"
               >
                 {joiningId === item.id ? (
-                  <ActivityIndicator color="#121212" size="small" />
+                  <ActivityIndicator color={COLORS.primary} size="small" />
                 ) : (
-                  <Text className="font-orbitron text-xs font-bold uppercase text-background">
-                    Join Challenge
-                  </Text>
+                  <View className="flex-row items-center gap-2">
+                    <Text
+                      style={{
+                        fontFamily: FONTS.orbitronBold,
+                        color: COLORS.primary,
+                      }}
+                      className="text-xs uppercase tracking-widest"
+                    >
+                      ENTER ARENA
+                    </Text>
+                  </View>
                 )}
               </TouchableOpacity>
             </View>
@@ -183,29 +261,59 @@ export default function ArenasScreen() {
         animationType="fade"
         onRequestClose={() => setIsModalOpen(false)}
       >
-        <View className="flex-1 items-center justify-center bg-black/80 px-5">
-          <View className="w-full rounded-2xl border border-cardBorder bg-card p-5">
-            <View className="mb-4 flex-row items-center justify-between border-b border-cardBorder pb-3">
-              <View className="flex-row items-center gap-2">
-                <CrossedSwordsIcon size={20} color="#B5F23D" />
-                <Text className="font-orbitron text-base font-bold text-text-main">
-                  CREATE <Text className="text-accentGreen">CHALLENGE</Text>
+        <View className="flex-1 items-center justify-center bg-black/85 px-5">
+          <View
+            style={{
+              backgroundColor: COLORS.card,
+              borderColor: COLORS.cardBorder,
+            }}
+            className="w-full max-w-md rounded-3xl border p-6 shadow-2xl"
+          >
+            {/* Modal Header */}
+            <View
+              style={{ borderColor: COLORS.cardBorder }}
+              className="mb-4 flex-row items-center justify-between border-b pb-4"
+            >
+              <View className="flex-row items-center gap-2.5">
+                <CrossedSwordsIcon size={20} color={COLORS.primary} />
+                <Text
+                  style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
+                  className="text-base"
+                >
+                  CREATE <Text style={{ color: COLORS.primary }}>CHALLENGE</Text>
                 </Text>
               </View>
-              <TouchableOpacity onPress={() => setIsModalOpen(false)}>
-                <CloseIcon size={20} color="#8E8E93" />
+              <TouchableOpacity
+                onPress={() => setIsModalOpen(false)}
+                className="rounded-full p-1 active:opacity-70"
+              >
+                <CloseIcon size={20} color={COLORS.secondary} />
               </TouchableOpacity>
             </View>
 
-            <Text className="mb-6 font-rajdhani text-sm text-text-muted">
+            <Text
+              style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
+              className="mb-6 text-sm leading-relaxed"
+            >
               Select your match preferences to broadcast a custom challenge lobby to active players.
             </Text>
 
+            {/* Modal Action Button */}
             <TouchableOpacity
               onPress={() => setIsModalOpen(false)}
-              className="w-full items-center justify-center rounded-xl bg-accentGreen py-3.5 active:opacity-90"
+              style={{
+                backgroundColor: COLORS.primary,
+                shadowColor: COLORS.primary,
+              }}
+              className="w-full items-center justify-center rounded-2xl py-4 shadow-lg active:opacity-90"
             >
-              <Text className="font-orbitron text-xs font-bold uppercase text-background">
+              <Text
+                style={{
+                  fontFamily: FONTS.orbitronBold,
+                  color: COLORS.background,
+                }}
+                className="text-xs uppercase tracking-widest"
+              >
                 LAUNCH LOBBY
               </Text>
             </TouchableOpacity>

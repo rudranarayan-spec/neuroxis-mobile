@@ -1,95 +1,125 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../../src/components/ScreenContainer';
-import { CyberInput } from '../../src/components/CyberInput';
 import { useAuth } from '../../src/context/AuthContext';
+import { COLORS } from '../../src/constants/theme';
+import { showToast } from '../../src/config/toastConfig';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const handleLogin = async () => {
     if (!email || !password) {
-      setError('Please fill in all fields');
+      showToast.error('MISSING_FIELDS', 'Please enter your email and password.');
       return;
     }
+
     try {
       setLoading(true);
-      setError('');
-      await login(email, password);
+      await login({ email: email.trim(), password });
+      showToast.success('AUTHENTICATED', 'Welcome back to the system.');
       router.replace('/(tabs)');
-    } catch (err: any) {
-      setError(err.message || 'Login failed. Check your credentials.');
+    } catch (error: any) {
+      const msg = error.response?.data?.message || 'Invalid credentials or network failure.';
+      showToast.error('AUTH_FAILED', msg);
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <ScreenContainer className="bg-background px-6">
-      <ScrollView contentContainerStyle={{ flexGrow: 1, justifyContent: 'center' }} showsVerticalScrollIndicator={false}>
-        {/* Branding */}
-        <View className="mb-8">
-          <Text className="font-orbitron-black text-3xl font-bold text-text-main">
-            MATIKS <Text className="text-accentGreen">GAMING</Text>
-          </Text>
-          <Text className="mt-1 font-rajdhani text-sm text-text-muted">
-            Enter your credentials to access your player profile
-          </Text>
-        </View>
-
-        {/* Form Card */}
-        <View className="rounded-2xl border border-cardBorder bg-card p-5">
-          {error ? (
-            <View className="mb-4 rounded-xl bg-red-500/10 p-3 border border-red-500/20">
-              <Text className="font-rajdhani text-xs text-red-400">{error}</Text>
+    <ScreenContainer className="bg-background">
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} className="flex-1">
+        <ScrollView
+          contentContainerStyle={{ flexGrow: 1, justifyContent: 'center', alignItems: 'center' }}
+          showsVerticalScrollIndicator={false}
+          className="px-6 py-8"
+        >
+          {/* Centered Responsive Card Container */}
+          <View className="w-full max-w-md rounded-2xl border p-6" style={{ backgroundColor: COLORS.card, borderColor: COLORS.cardBorder }}>
+            {/* Header */}
+            <View className="mb-6 items-center text-center">
+              <Text className="font-rajdhani-bold text-xs uppercase tracking-[0.25em]" style={{ color: COLORS.primary }}>
+                AUTHENTICATION_NODE
+              </Text>
+              <Text className="mt-1 font-orbitron-black text-2xl font-bold" style={{ color: COLORS.textMain }}>
+                WELCOME <Text style={{ color: COLORS.primary }}>BACK</Text>
+              </Text>
+              <Text className="mt-1.5 text-center font-rajdhani text-sm" style={{ color: COLORS.textMuted }}>
+                Enter your credentials to access active arenas.
+              </Text>
             </View>
-          ) : null}
 
-          <CyberInput
-            label="Email Address"
-            placeholder="player@domain.com"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
+            {/* Form Fields */}
+            <View className="space-y-4">
+              <View>
+                <Text className="mb-1.5 font-rajdhani-bold text-xs uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+                  Email Address
+                </Text>
+                <TextInput
+                  value={email}
+                  onChangeText={setEmail}
+                  placeholder="rudra@admin.com"
+                  placeholderTextColor="#52525B"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  className="w-full rounded-xl border px-4 py-3 font-rajdhani font-semibold text-white"
+                  style={{ backgroundColor: COLORS.inputBg, borderColor: COLORS.cardBorder }}
+                />
+              </View>
 
-          <CyberInput
-            label="Password"
-            placeholder="••••••••"
-            value={password}
-            onChangeText={setPassword}
-            secureTextEntry
-          />
+              <View className="mt-3">
+                <Text className="mb-1.5 font-rajdhani-bold text-xs uppercase tracking-wider" style={{ color: COLORS.textMuted }}>
+                  Password
+                </Text>
+                <TextInput
+                  value={password}
+                  onChangeText={setPassword}
+                  placeholder="••••••••"
+                  placeholderTextColor="#52525B"
+                  secureTextEntry
+                  className="w-full rounded-xl border px-4 py-3 font-rajdhani font-semibold text-white"
+                  style={{ backgroundColor: COLORS.inputBg, borderColor: COLORS.cardBorder }}
+                />
+              </View>
+            </View>
 
-          <TouchableOpacity
-            onPress={handleLogin}
-            disabled={loading}
-            className="mt-2 items-center justify-center rounded-xl bg-accentGreen py-3.5 active:opacity-90"
-          >
-            {loading ? (
-              <ActivityIndicator color="#121212" />
-            ) : (
-              <Text className="font-orbitron text-xs font-bold text-background">LOG IN</Text>
-            )}
-          </TouchableOpacity>
-        </View>
+            {/* Action Button */}
+            <TouchableOpacity
+              onPress={handleLogin}
+              disabled={loading}
+              className="mt-6 w-full items-center justify-center rounded-xl py-3.5 active:opacity-90"
+              style={{ backgroundColor: COLORS.primary }}
+            >
+              {loading ? (
+                <ActivityIndicator color={COLORS.background} size="small" />
+              ) : (
+                <Text className="font-orbitron text-xs font-bold uppercase" style={{ color: COLORS.background }}>
+                  LOG IN
+                </Text>
+              )}
+            </TouchableOpacity>
 
-        {/* Footer Navigation */}
-        <View className="mt-6 flex-row justify-center">
-          <Text className="font-rajdhani text-sm text-text-muted">Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
-            <Text className="font-rajdhani-bold text-sm text-accentGreen">Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </ScrollView>
+            {/* Footer Navigation */}
+            <View className="mt-5 flex-row justify-center gap-1">
+              <Text className="font-rajdhani text-sm" style={{ color: COLORS.textMuted }}>
+                Don't have an account?
+              </Text>
+              <TouchableOpacity onPress={() => router.push('/(auth)/register')}>
+                <Text className="font-rajdhani-bold text-sm font-bold" style={{ color: COLORS.primary }}>
+                  Sign Up
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </ScreenContainer>
   );
 }

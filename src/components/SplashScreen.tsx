@@ -12,8 +12,9 @@ import Animated, {
   interpolate,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import { COLORS, FONTS } from '../constants/theme'; 
 
-const { width, height } = Dimensions.get('window');
+const { height } = Dimensions.get('window');
 
 interface SplashScreenProps {
   onFinish: () => void;
@@ -90,48 +91,88 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) =>
   }));
 
   return (
-    <Animated.View style={[containerStyle]} className="flex-1 items-center justify-center bg-background px-6">
-      {/* 1. Matrix Cyber Grid Ambient Rays */}
+    <Animated.View
+      style={[{ backgroundColor: COLORS.background }, containerStyle]}
+      className="flex-1 items-center justify-center px-6"
+    >
+      {/* 1. Ambient Background Rays */}
       <View className="absolute inset-0 items-center justify-center opacity-30">
-        <View className="h-[400px] w-[400px] rounded-full bg-neon/15 blur-3xl" />
+        <View
+          style={{ backgroundColor: COLORS.primary }}
+          className="h-[400px] w-[400px] rounded-full opacity-15 blur-3xl"
+        />
       </View>
 
       {/* 2. Vertical Matrix Scanner Line */}
       <Animated.View
-        style={[scannerStyle]}
-        className="absolute h-[2px] w-full bg-neon/40 shadow-lg shadow-neon"
+        style={[
+          scannerStyle,
+          {
+            backgroundColor: COLORS.primary,
+            shadowColor: COLORS.primary,
+          },
+        ]}
+        className="absolute h-[2px] w-full opacity-40 shadow-lg"
       />
 
       {/* 3. Glassmorphic Core Container */}
       <View className="items-center justify-center">
-        {/* Rotating Outer Cyber Ring */}
+        {/* Rotating Outer Cyber Rings */}
         <Animated.View
-          style={[ringStyle]}
-          className="absolute h-48 w-48 rounded-full border border-dashed border-neon/40"
+          style={[ringStyle, { borderColor: COLORS.primary }]}
+          className="absolute h-48 w-48 rounded-full border border-dashed opacity-40"
         />
         <Animated.View
-          style={[ringStyle]}
-          className="absolute h-56 w-56 rounded-full border border-dotted border-neon/20"
+          style={[ringStyle, { borderColor: COLORS.primary }]}
+          className="absolute h-56 w-56 rounded-full border border-dotted opacity-20"
         />
 
-        {/* Central Card with Blur Effect */}
-        <BlurView intensity={25} tint="dark" className="overflow-hidden rounded-3xl border border-neon/30 p-8">
+        {/* Central Blur Card */}
+        <BlurView
+          intensity={25}
+          tint="dark"
+          style={{ borderColor: COLORS.cardBorder }}
+          className="overflow-hidden rounded-3xl border p-8"
+        >
           <Animated.View style={[logoStyle]} className="items-center">
             {/* Top Indicator Accent */}
             <View className="mb-4 flex-row items-center gap-1.5">
-              <View className="h-1.5 w-1.5 rounded-full bg-neon animate-pulse" />
-              <Text className="font-rajdhani-bold text-[10px] uppercase tracking-[0.25em] text-neon-light">
+              <View
+                style={{ backgroundColor: COLORS.primary }}
+                className="h-1.5 w-1.5 rounded-full animate-pulse"
+              />
+              <Text
+                style={{
+                  fontFamily: FONTS.rajdhaniBold,
+                  color: COLORS.primary,
+                }}
+                className="text-[10px] uppercase tracking-[0.25em]"
+              >
                 SYSTEM_v2.04 // ONLINE
               </Text>
             </View>
 
             {/* Main Brand Title */}
-            <Text className="font-orbitron-black text-4xl tracking-widest text-white shadow-md shadow-neon">
-              NEURO<Text className="text-neon">XIS</Text>
+            <Text
+              style={{
+                fontFamily: FONTS.orbitronBlack,
+                color: COLORS.textMain,
+                shadowColor: COLORS.primary,
+              }}
+              className="text-4xl tracking-widest shadow-md"
+            >
+              NEURO
+              <Text style={{ color: COLORS.primary }}>XIS</Text>
             </Text>
 
             {/* Subtitle */}
-            <Text className="mt-2 font-rajdhani text-xs tracking-[0.35em] text-text-muted uppercase">
+            <Text
+              style={{
+                fontFamily: FONTS.rajdhaniMedium,
+                color: COLORS.textMuted,
+              }}
+              className="mt-2 text-xs uppercase tracking-[0.35em]"
+            >
               Neural Arena Engine
             </Text>
           </Animated.View>
@@ -140,10 +181,22 @@ export const CustomSplashScreen: React.FC<SplashScreenProps> = ({ onFinish }) =>
 
       {/* 4. Bottom System Status Bar */}
       <View className="absolute bottom-12 items-center">
-        <View className="h-1 w-24 overflow-hidden rounded-full bg-cardBorder">
-          <Animated.View className="h-full w-full bg-neon" style={logoStyle} />
+        <View
+          style={{ backgroundColor: COLORS.cardBorder }}
+          className="h-1 w-24 overflow-hidden rounded-full"
+        >
+          <Animated.View
+            style={[{ backgroundColor: COLORS.primary }, logoStyle]}
+            className="h-full w-full"
+          />
         </View>
-        <Text className="mt-3 font-rajdhani-bold text-[11px] uppercase tracking-[0.2em] text-text-muted">
+        <Text
+          style={{
+            fontFamily: FONTS.rajdhaniBold,
+            color: COLORS.textMuted,
+          }}
+          className="mt-3 text-[11px] uppercase tracking-[0.2em]"
+        >
           INITIALIZING CORE MODULES...
         </Text>
       </View>
