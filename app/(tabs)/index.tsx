@@ -6,6 +6,46 @@ import { ScreenContainer } from '../../src/components/ScreenContainer';
 import { useAuth } from '../../src/context/AuthContext';
 import { dashboardService } from '../../src/services/dashboardService';
 
+interface GameItem {
+  id: string;
+  title: string;
+  category: string;
+  rating: number;
+  xpReward: string;
+  route: string;
+  isAvailable: boolean;
+}
+
+const TOP_GAMES: GameItem[] = [
+  {
+    id: 'sudoku',
+    title: 'Matrix Sudoku 6x6',
+    category: 'Logic & Decryption',
+    rating: 4.9,
+    xpReward: '+50 XP',
+    route: '/game/sudoku',
+    isAvailable: true,
+  },
+  {
+    id: 'memory_matrix',
+    title: 'Pattern Recall',
+    category: 'Memory & Speed',
+    rating: 4.7,
+    xpReward: '+40 XP',
+    route: '/game/pattern-recall',
+    isAvailable: false,
+  },
+  {
+    id: 'sequence_breaker',
+    title: 'Sequence Breaker',
+    category: 'Pattern Analysis',
+    rating: 4.8,
+    xpReward: '+60 XP',
+    route: '/game/sequence-breaker',
+    isAvailable: false,
+  },
+];
+
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
@@ -17,6 +57,19 @@ export default function HomeScreen() {
     queryKey: ['dashboardMetrics'],
     queryFn: dashboardService.getMetrics,
   });
+
+  const handlePlayGame = (game: GameItem) => {
+    if (game.isAvailable) {
+      router.push({
+        pathname: '/game-overview',
+        params: {
+          gameId: game.id,
+          title: game.title,
+          route: game.route
+        },
+      });
+    }
+  };
 
   return (
     <ScreenContainer className="bg-background px-4">
@@ -63,16 +116,14 @@ export default function HomeScreen() {
               <TouchableOpacity
                 key={tab}
                 onPress={() => setActiveFilter(tab)}
-                className={`rounded-full px-4 py-2 border ${
-                  isActive
-                    ? 'border-accentGreen bg-accentGreen/10'
-                    : 'border-cardBorder bg-card'
-                }`}
+                className={`rounded-full border px-4 py-2 ${isActive
+                  ? 'border-accentGreen bg-accentGreen/10'
+                  : 'border-cardBorder bg-card'
+                  }`}
               >
                 <Text
-                  className={`font-rajdhani-bold text-xs ${
-                    isActive ? 'text-accentGreen' : 'text-text-muted'
-                  }`}
+                  className={`font-rajdhani-bold text-xs ${isActive ? 'text-accentGreen' : 'text-text-muted'
+                    }`}
                 >
                   {tab}
                 </Text>
@@ -94,13 +145,13 @@ export default function HomeScreen() {
             <Text className="mt-3 font-rajdhani text-xs text-text-muted">Top 2%</Text>
           </View>
 
-          {/* WIN RATE CARD (HIGHLIGHTED) */}
-          <View className="w-[48%] rounded-2xl border border-accentGreen/40 bg-card p-4">
+          {/* WIN RATE CARD */}
+          <View className="w-[48%] rounded-2xl border border-cardBorder bg-card p-4">
             <View className="flex-row items-center justify-between">
               <Text className="font-orbitron-black text-2xl text-text-main">
                 {metrics?.winRate || 68.5}%
               </Text>
-              <View className="h-6 w-6 items-center justify-center rounded-lg bg-badge-green/20">
+              <View className="h-6 w-6 items-center justify-center rounded-lg bg-cardBorder">
                 <Text className="text-xs">⚡</Text>
               </View>
             </View>
@@ -129,7 +180,7 @@ export default function HomeScreen() {
                 RATING (MMR)
               </Text>
             </View>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-badge-purple/20">
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-cardBorder">
               <Text className="text-base">🧩</Text>
             </View>
           </View>
@@ -144,7 +195,7 @@ export default function HomeScreen() {
                 STREAK
               </Text>
             </View>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-badge-yellow/20">
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-cardBorder">
               <Text className="text-base">👑</Text>
             </View>
           </View>
@@ -159,7 +210,7 @@ export default function HomeScreen() {
                 LIVE ARENAS
               </Text>
             </View>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-badge-teal/20">
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-cardBorder">
               <Text className="text-base">🎮</Text>
             </View>
           </View>
@@ -174,13 +225,70 @@ export default function HomeScreen() {
                 WIN : LOSS
               </Text>
             </View>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-badge-teal/20">
+            <View className="h-9 w-9 items-center justify-center rounded-xl bg-cardBorder">
               <Text className="text-base">⚖️</Text>
             </View>
           </View>
         </View>
 
-        {/* 5. FEATURED TOURNAMENT CARD */}
+        {/* 5. TOP RATED GAMES */}
+        <View className="mb-6">
+          <View className="mb-3 flex-row items-center justify-between">
+            <Text className="font-rajdhani-bold text-base text-text-main">
+              Top Rated Games
+            </Text>
+            <Text className="font-rajdhani text-xs text-text-muted">
+              {TOP_GAMES.length} MODULES
+            </Text>
+          </View>
+
+          <View className="gap-3">
+            {TOP_GAMES.map((game) => (
+              <TouchableOpacity
+                key={game.id}
+                onPress={() => handlePlayGame(game)}
+                activeOpacity={game.isAvailable ? 0.8 : 1}
+                className={`rounded-2xl border border-cardBorder bg-card p-4 ${!game.isAvailable ? 'opacity-50' : ''
+                  }`}
+              >
+                <View className="flex-row items-center justify-between">
+                  <Text className="font-rajdhani-bold text-xs uppercase tracking-wider text-text-muted">
+                    {game.category}
+                  </Text>
+                  <Text className="font-rajdhani-bold text-xs text-yellow-400">
+                    ★ {game.rating}
+                  </Text>
+                </View>
+
+                <Text className="mt-1 font-orbitron-black text-lg text-text-main">
+                  {game.title}
+                </Text>
+
+                <View className="mt-3 flex-row items-center justify-between">
+                  <Text className="font-rajdhani-bold text-xs text-accentGreen">
+                    {game.xpReward}
+                  </Text>
+
+                  <View
+                    className={`rounded-xl px-4 py-2 border ${game.isAvailable
+                      ? 'border-accentGreen bg-accentGreen/10'
+                      : 'border-cardBorder bg-cardBorder'
+                      }`}
+                  >
+                    <Text
+                      className={`font-rajdhani-bold text-xs ${game.isAvailable ? 'text-accentGreen' : 'text-text-muted'
+                        }`}
+                    >
+                      {game.isAvailable ? 'PLAY NOW' : 'LOCKED'}
+                    </Text>
+                  </View>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* 6. FEATURED TOURNAMENT CARD */}
         <View className="rounded-2xl border border-cardBorder bg-card p-4">
           <View className="flex-row items-center gap-2">
             <View className="h-2 w-2 rounded-full bg-accentGreen" />
