@@ -5,6 +5,18 @@ import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../../src/components/ScreenContainer';
 import { useAuth } from '../../src/context/AuthContext';
 import { dashboardService } from '../../src/services/dashboardService';
+import { TimeframeFilter } from '../../src/types/dashboard';
+import { Flame, Shield, Zap } from 'lucide-react-native';
+
+const mapFilterToTimeframe = (tab: string): TimeframeFilter => {
+  switch (tab) {
+    case 'TODAY': return 'TODAY';
+    case '7 DAYS': return '7_DAYS';
+    case '30 DAYS': return '30_DAYS';
+    case 'ALL TIME': return 'ALL_TIME';
+    default: return 'ALL_TIME';
+  }
+};
 
 interface GameItem {
   id: string;
@@ -49,14 +61,15 @@ const TOP_GAMES: GameItem[] = [
 export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
-  const [activeFilter, setActiveFilter] = useState('7 DAYS');
 
   const filterTabs = ['TODAY', '7 DAYS', '30 DAYS', 'ALL TIME'];
 
-  const { data: metrics, isLoading, refetch, isRefetching } = useQuery({
+  const { data: response, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['dashboardMetrics'],
-    queryFn: dashboardService.getMetrics,
+    queryFn: () => dashboardService.getDashboardStats(),
   });
+
+  const metrics = response?.data;
 
   const handlePlayGame = (game: GameItem) => {
     if (game.isAvailable) {
@@ -85,148 +98,124 @@ export default function HomeScreen() {
           />
         }
       >
-        {/* 1. HEADER */}
+        {/* 1. HEADER WITH BADGES */}
         <View className="mb-5 flex-row items-center justify-between">
-          <View>
-            <Text className="font-rajdhani text-xs font-semibold text-text-muted">
-              WELCOME BACK
-            </Text>
-            <Text className="font-orbitron-black text-2xl text-text-main">
-              {user?.username || 'Gamer'}
-            </Text>
-          </View>
-
-          {/* User Avatar Badge */}
-          <View className="h-10 w-10 items-center justify-center rounded-xl border border-cardBorder bg-card">
-            <Text className="font-orbitron text-xs font-bold text-accentGreen">
-              {user?.username?.substring(0, 2).toUpperCase() || 'P1'}
-            </Text>
-          </View>
-        </View>
-
-        {/* 2. PILL FILTER TABS */}
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="mb-6 flex-row gap-2"
-        >
-          {filterTabs.map((tab) => {
-            const isActive = activeFilter === tab;
-            return (
-              <TouchableOpacity
-                key={tab}
-                onPress={() => setActiveFilter(tab)}
-                className={`rounded-full border px-4 py-2 ${isActive
-                  ? 'border-accentGreen bg-accentGreen/10'
-                  : 'border-cardBorder bg-card'
-                  }`}
-              >
-                <Text
-                  className={`font-rajdhani-bold text-xs ${isActive ? 'text-accentGreen' : 'text-text-muted'
-                    }`}
-                >
-                  {tab}
+          {/* Left Section: Badges & Greeting */}
+          <View className="gap-2">
+            {/* Matiks Style Stat Badges Row */}
+            <View className="flex-row items-center gap-2">
+              {/* Level Badge - Shield Icon */}
+              <View className="flex-row items-center gap-1.5 rounded-full border border-cardBorder bg-card px-3 py-1">
+                <Shield size={12} color="#B5F23D" />
+                <Text className="font-orbitron-bold text-xs text-text-main">
+                  {metrics?.level || user?.level || 1}
                 </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              </View>
 
-        {/* 3. FEATURED MODES GRID */}
-        <View className="mb-6 flex-row flex-wrap justify-between gap-3">
-          {/* RANK CARD */}
-          <View className="w-[48%] rounded-2xl border border-cardBorder bg-card p-4">
-            <Text className="font-orbitron-black text-xl text-text-main">
-              {isLoading ? '...' : metrics?.rank || 'LEGEND III'}
-            </Text>
-            <Text className="mt-1 font-rajdhani-bold text-xs uppercase tracking-wider text-text-muted">
-              CURRENT RANK
-            </Text>
-            <Text className="mt-3 font-rajdhani text-xs text-text-muted">Top 2%</Text>
-          </View>
+              {/* Daily Streak Badge - Flame Icon */}
+              <View className="flex-row items-center gap-1.5 rounded-full border border-cardBorder bg-card px-3 py-1">
+                <Flame size={12} color="#FF6B00" />
+                <Text className="font-orbitron-bold text-xs text-text-main">
+                  {metrics?.winStreak || '0 DAYS'}
+                </Text>
+              </View>
 
-          {/* WIN RATE CARD */}
-          <View className="w-[48%] rounded-2xl border border-cardBorder bg-card p-4">
-            <View className="flex-row items-center justify-between">
-              <Text className="font-orbitron-black text-2xl text-text-main">
-                {metrics?.winRate || 68.5}%
-              </Text>
-              <View className="h-6 w-6 items-center justify-center rounded-lg bg-cardBorder">
-                <Text className="text-xs">⚡</Text>
+              {/* XP Badge - Zap/Energy Icon */}
+              <View className="flex-row items-center gap-1.5 rounded-full border border-cardBorder bg-card px-3 py-1">
+                <Zap size={12} color="#A855F7" />
+                <Text className="font-orbitron-bold text-xs text-text-main">
+                  {metrics?.totalXp || user?.xp || 0} XP
+                </Text>
               </View>
             </View>
-            <Text className="mt-1 font-rajdhani-bold text-xs uppercase tracking-wider text-text-muted">
-              WIN RATE
-            </Text>
-            <Text className="mt-3 font-rajdhani-bold text-xs text-accentGreen">
-              +4.2% ↑
+
+            {/* Welcome Greeting */}
+            <View className="mt-1 flex flex-row align-middle gap-1">
+              <Text className="font-rajdhani text-md font-semibold text-text-muted">
+                WELCOME BACK
+              </Text>
+              <Text className="font-rajdhani text-md font-semibold text-lime-400">
+                {user?.username || metrics?.username.toLocaleUpperCase() || 'Gamer'}
+              </Text>
+            </View>
+          </View>
+
+          {/* Right Section: User Avatar */}
+          <View className="h-11 w-11 items-center justify-center rounded-xl border border-cardBorder bg-card">
+            <Text className="font-orbitron text-sm font-bold text-accentGreen">
+              {(user?.username || metrics?.username || 'P1').substring(0, 2).toUpperCase()}
             </Text>
           </View>
         </View>
 
-        {/* 4. STATS OVERVIEW SECTION */}
-        <Text className="mb-3 font-rajdhani-bold text-base text-text-main">
-          Stats Overview
-        </Text>
+        {/* 3. CONSOLIDATED STATS GRID (ONLY 4 BOXES) */}
+        <View className="mb-6">
+          <Text className="mb-3 font-rajdhani-bold text-base text-text-main">
+            Stats Overview
+          </Text>
 
-        <View className="mb-6 flex-row flex-wrap justify-between gap-3">
-          {/* RATING */}
-          <View className="w-[48%] flex-row items-center justify-between rounded-2xl border border-cardBorder bg-card p-3.5">
-            <View>
-              <Text className="font-orbitron-black text-lg text-text-main">
-                {metrics?.mmr || 2840}
+          <View className="flex-row flex-wrap justify-between gap-3">
+            {/* 1. RANK CARD */}
+            <View className="w-[48%] rounded-2xl border border-cardBorder bg-card p-3.5">
+              <View className="flex-row items-center justify-between">
+                <Text className="font-orbitron-black text-lg text-text-main">
+                  {isLoading ? '...' : metrics?.rankTitle || 'LEGEND III'}
+                </Text>
+              </View>
+              <Text className="mt-1 font-rajdhani-bold text-xs uppercase text-text-muted">
+                CURRENT RANK
               </Text>
-              <Text className="font-rajdhani text-xs uppercase text-text-muted">
+              <Text className="mt-2 font-rajdhani text-xs text-accentGreen">
+                {metrics?.rankPercentile || 'Top 2%'}
+              </Text>
+            </View>
+
+            {/* 2. RATING (MMR) */}
+            <View className="w-[48%] rounded-2xl border border-cardBorder bg-card p-3.5">
+              <View className="flex-row items-center justify-between">
+                <Text className="font-orbitron-black text-lg text-text-main">
+                  {metrics?.mmrRating ?? 1200}
+                </Text>
+                <Text className="text-base">🧩</Text>
+              </View>
+              <Text className="mt-1 font-rajdhani-bold text-xs uppercase text-text-muted">
                 RATING (MMR)
               </Text>
+              <Text className="mt-2 font-rajdhani text-xs text-text-muted">
+                Global Rank
+              </Text>
             </View>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-cardBorder">
-              <Text className="text-base">🧩</Text>
-            </View>
-          </View>
 
-          {/* WIN STREAK */}
-          <View className="w-[48%] flex-row items-center justify-between rounded-2xl border border-cardBorder bg-card p-3.5">
-            <View>
-              <Text className="font-orbitron-black text-lg text-text-main">
-                {metrics?.dailyStreak || 7} WINS
+            {/* 3. WIN RATE */}
+            <View className="w-[48%] rounded-2xl border border-cardBorder bg-card p-3.5">
+              <View className="flex-row items-center justify-between">
+                <Text className="font-orbitron-black text-lg text-text-main">
+                  {metrics?.winRate || '0%'}
+                </Text>
+                <Text className="text-base">⚡</Text>
+              </View>
+              <Text className="mt-1 font-rajdhani-bold text-xs uppercase text-text-muted">
+                WIN RATE
               </Text>
-              <Text className="font-rajdhani text-xs uppercase text-text-muted">
-                STREAK
+              <Text className="mt-2 font-rajdhani text-xs text-accentGreen">
+                {metrics?.totalMatches || 0} Total Played
               </Text>
             </View>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-cardBorder">
-              <Text className="text-base">👑</Text>
-            </View>
-          </View>
 
-          {/* LIVE ARENAS */}
-          <View className="w-[48%] flex-row items-center justify-between rounded-2xl border border-cardBorder bg-card p-3.5">
-            <View>
-              <Text className="font-orbitron-black text-lg text-text-main">
-                {metrics?.liveMatchesCount || 14}
-              </Text>
-              <Text className="font-rajdhani text-xs uppercase text-text-muted">
-                LIVE ARENAS
-              </Text>
-            </View>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-cardBorder">
-              <Text className="text-base">🎮</Text>
-            </View>
-          </View>
-
-          {/* MATCHES PLAYED */}
-          <View className="w-[48%] flex-row items-center justify-between rounded-2xl border border-cardBorder bg-card p-3.5">
-            <View>
-              <Text className="font-orbitron-black text-lg text-text-main">
-                143 : 99
-              </Text>
-              <Text className="font-rajdhani text-xs uppercase text-text-muted">
+            {/* 4. WIN : LOSS RATIO */}
+            <View className="w-[48%] rounded-2xl border border-cardBorder bg-card p-3.5">
+              <View className="flex-row items-center justify-between">
+                <Text className="font-orbitron-black text-lg text-text-main">
+                  {metrics?.winLossRatio || '0 : 0'}
+                </Text>
+                <Text className="text-base">⚖️</Text>
+              </View>
+              <Text className="mt-1 font-rajdhani-bold text-xs uppercase text-text-muted">
                 WIN : LOSS
               </Text>
-            </View>
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-cardBorder">
-              <Text className="text-base">⚖️</Text>
+              <Text className="mt-2 font-rajdhani text-xs text-text-muted">
+                {metrics?.liveArenasJoined || 0} Arenas
+              </Text>
             </View>
           </View>
         </View>

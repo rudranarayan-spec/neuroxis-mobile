@@ -20,11 +20,20 @@ import { useAuth } from '../../src/context/AuthContext';
 import { useConfirm } from '../../src/context/ConfirmContext';
 import { showToast } from '../../src/config/toastConfig';
 import { COLORS, FONTS } from '../../src/constants/theme';
+import { useQuery } from '@tanstack/react-query';
+import { profileService } from '../../src/services/profileService';
 
 export default function ProfileScreen() {
   const { user, logout } = useAuth();
   const { confirm } = useConfirm();
   const router = useRouter();
+
+  const { data: response, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ['userProfile'],
+    queryFn: profileService.getUserProfile,
+  });
+
+  const profile = response?.data;
 
   const handleLogout = async () => {
     const isConfirmed = await confirm({
@@ -83,68 +92,99 @@ export default function ProfileScreen() {
             backgroundColor: COLORS.card,
             borderColor: COLORS.cardBorder,
           }}
-          className="mb-6 rounded-3xl border p-5 sm:p-6 items-center shadow-2xl"
+          className="relative mb-6 rounded-3xl border p-5 sm:p-6 overflow-hidden shadow-2xl"
         >
-          {/* Avatar Ring */}
+          {/* BACKGROUND WATERMARK TEXT (Top Right Aligned) */}
           <View
-            style={{
-              borderColor: COLORS.cardBorder,
-              backgroundColor: COLORS.inputBg,
-            }}
-            className="h-20 w-20 sm:h-24 sm:w-24 items-center justify-center rounded-2xl border-2 relative"
+            aria-hidden={true}
+            className="absolute top-3 right-3 items-end pointer-events-none opacity-25"
           >
             <Text
               style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
-              className="text-2xl sm:text-3xl"
+              className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
             >
-              {user?.username?.substring(0, 2).toUpperCase() || 'OP'}
+              THINK FAST.
             </Text>
-            {/* Status Indicator */}
-            <View
-              style={{ backgroundColor: COLORS.primary }}
-              className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-background"
-            />
-          </View>
-
-          {/* User Meta */}
-          <Text
-            style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
-            className="mt-3 text-lg sm:text-xl text-center"
-            numberOfLines={1}
-          >
-            {user?.username || 'Operator One'}
-          </Text>
-          <Text
-            style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
-            className="mt-0.5 text-xs tracking-wider text-center"
-            numberOfLines={1}
-          >
-            {user?.email || 'operator@matiks.net'}
-          </Text>
-
-          {/* Tier Badge */}
-          <View
-            style={{
-              backgroundColor: `${COLORS.cardBorder}60`,
-              borderColor: COLORS.cardBorder,
-            }}
-            className="mt-3 rounded-full border px-3 py-1"
-          >
             <Text
-              style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMain }}
-              className="text-[10px] uppercase tracking-widest"
+              style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
+              className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
             >
-              LEVEL 42 OPERATOR
+              WIN LOUDER.
+            </Text>
+            <Text
+              style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.primary }}
+              className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
+            >
+              PLAY IT SMART.
             </Text>
           </View>
 
-          {/* Combat & System Stats Grid */}
+          {/* TOP SECTION: LEFT-ALIGNED PROFILE DETAILS */}
+          <View className="flex-row items-center gap-4 z-10 pr-28">
+            {/* Avatar Ring */}
+            <View
+              style={{
+                borderColor: COLORS.cardBorder,
+                backgroundColor: COLORS.inputBg,
+              }}
+              className="h-16 w-16 sm:h-20 sm:w-20 items-center justify-center rounded-2xl border-2 relative shrink-0"
+            >
+              <Text
+                style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
+                className="text-xl sm:text-2xl"
+              >
+                {profile?.username?.substring(0, 2).toUpperCase() || 'OP'}
+              </Text>
+              {/* Status Indicator */}
+              <View
+                style={{ backgroundColor: COLORS.primary }}
+                className="absolute -bottom-1 -right-1 h-3.5 w-3.5 rounded-full border-2 border-background"
+              />
+            </View>
+
+            {/* User Meta & Tier Badge */}
+            <View className="flex-1 items-start">
+              <Text
+                style={{ fontFamily: FONTS.orbitronBold, color: COLORS.textMain }}
+                className="text-base sm:text-lg text-left"
+                numberOfLines={1}
+              >
+                {profile?.username || 'Operator One'}
+              </Text>
+
+              <Text
+                style={{ fontFamily: FONTS.rajdhaniMedium, color: COLORS.textMuted }}
+                className="text-xs tracking-wider text-left"
+                numberOfLines={1}
+              >
+                {profile?.email || 'operator@neuroxis.net'}
+              </Text>
+
+              {/* Tier Badge */}
+              <View
+                style={{
+                  backgroundColor: `${COLORS.cardBorder}60`,
+                  borderColor: COLORS.cardBorder,
+                }}
+                className="mt-2 rounded-full border px-2.5 py-0.5"
+              >
+                <Text
+                  style={{ fontFamily: FONTS.rajdhaniBold, color: COLORS.textMain }}
+                  className="text-[9px] uppercase tracking-widest"
+                >
+                  {profile?.levelTitle || 'LEVEL 1 OPERATOR'}
+                </Text>
+              </View>
+            </View>
+          </View>
+
+          {/* COMBAT & SYSTEM STATS GRID (UNTOUCHED) */}
           <View
             style={{
               backgroundColor: COLORS.inputBg,
               borderColor: `${COLORS.cardBorder}80`,
             }}
-            className="mt-5 flex-row w-full justify-between rounded-2xl border p-3.5"
+            className="mt-5 flex-row w-full justify-between rounded-2xl border p-3.5 z-10"
           >
             <View className="flex-1 items-center px-1">
               <Text
@@ -159,7 +199,7 @@ export default function ProfileScreen() {
                 className="mt-0.5 text-sm sm:text-base"
                 numberOfLines={1}
               >
-                142
+                {profile?.stats.matches}
               </Text>
             </View>
 
@@ -176,7 +216,7 @@ export default function ProfileScreen() {
                 className="mt-0.5 text-sm sm:text-base"
                 numberOfLines={1}
               >
-                68.4%
+                {profile?.stats.winRate}
               </Text>
             </View>
 
@@ -193,7 +233,7 @@ export default function ProfileScreen() {
                 className="mt-0.5 text-sm sm:text-base"
                 numberOfLines={1}
               >
-                #412
+                {profile?.stats.rank}
               </Text>
             </View>
           </View>

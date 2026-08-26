@@ -1,23 +1,11 @@
-export interface DashboardMetrics {
-  rank: string;
-  mmr: number;
-  winRate: number;
-  activeTournament: string;
-  liveMatchesCount: number;
-  dailyStreak: number;
-}
+import { apiClient } from '../config/apiClient';
+import { DashboardStatsResponse, TimeframeFilter } from '../types/dashboard';
 
 export const dashboardService = {
-  getMetrics: async (): Promise<DashboardMetrics> => {
-    await new Promise((resolve) => setTimeout(resolve, 600));
-    return {
-      rank: 'CYBER_LEGEND III',
-      mmr: 2840,
-      winRate: 68.5,
-      activeTournament: 'NEURAL_CHAMPIONSHIP_SEASON_4',
-      liveMatchesCount: 14,
-      dailyStreak: 7,
-    };
+  getDashboardStats: async (timeframe: TimeframeFilter = 'ALL_TIME') => {
+    const response = await apiClient.get<DashboardStatsResponse>('/users/dashboard-stats', {
+      params: { timeframe },
+    });
+    return response.data;
   },
-  
 };
