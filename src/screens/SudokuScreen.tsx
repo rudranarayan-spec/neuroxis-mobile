@@ -241,27 +241,36 @@ export const SudokuScreen: React.FC = () => {
                 const isSelected =
                   selectedCell?.row === rIdx && selectedCell?.col === cIdx;
 
+                // Check if the current cell conflicts with row, column, or sub-grid
+                const hasConflict = isCellInvalid(rIdx, cIdx, userBoard);
+
                 const borderBottom = rIdx === 1 || rIdx === 3 ? 'border-b-2' : 'border-b';
                 const borderRight = cIdx === 2 ? 'border-r-2' : 'border-r';
+
+                // Background styling priority: Invalid (Red) > Selected (Lime) > Default (Transparent)
+                const backgroundStyle = hasConflict
+                  ? 'bg-red-500/30'
+                  : isSelected
+                    ? 'bg-lime-500/30'
+                    : 'bg-transparent';
+
+                // Text color priority: Initial Clue (Muted) > Invalid (Red) > Selected (Green) > Standard (White)
+                const textColor = isInitial
+                  ? 'text-text-muted'
+                  : hasConflict
+                    ? 'text-red-400'
+                    : isSelected
+                      ? 'text-accentGreen'
+                      : 'text-text-main';
 
                 return (
                   <TouchableOpacity
                     key={`cell-${rIdx}-${cIdx}`}
                     onPress={() => handleCellPress(rIdx, cIdx)}
                     activeOpacity={isInitial ? 1 : 0.7}
-                    className={`h-14 w-14 items-center justify-center border-green-800 ${borderBottom} ${borderRight} ${
-                      isSelected ? 'bg-lime-500/30' : 'bg-transparent'
-                    }`}
+                    className={`h-14 w-14 items-center justify-center border-green-800 ${borderBottom} ${borderRight} ${backgroundStyle}`}
                   >
-                    <Text
-                      className={`font-orbitron-black text-xl ${
-                        isInitial
-                          ? 'text-text-muted'
-                          : isSelected
-                          ? 'text-accentGreen'
-                          : 'text-text-main'
-                      }`}
-                    >
+                    <Text className={`font-orbitron-black text-xl ${textColor}`}>
                       {cellValue !== 0 ? cellValue : ''}
                     </Text>
                   </TouchableOpacity>
@@ -287,9 +296,8 @@ export const SudokuScreen: React.FC = () => {
           <TouchableOpacity
             onPress={handleUndo}
             disabled={history.length === 0}
-            className={`h-12 w-14 items-center justify-center rounded-xl border border-cardBorder bg-card ${
-              history.length === 0 ? 'opacity-40' : ''
-            }`}
+            className={`h-12 w-14 items-center justify-center rounded-xl border border-cardBorder bg-card ${history.length === 0 ? 'opacity-40' : ''
+              }`}
           >
             <Text className="text-base text-text-main">↶</Text>
           </TouchableOpacity>
@@ -297,9 +305,8 @@ export const SudokuScreen: React.FC = () => {
           <TouchableOpacity
             onPress={handleClearCell}
             disabled={!selectedCell}
-            className={`h-12 flex-row items-center justify-center gap-1.5 rounded-xl border border-cardBorder bg-card px-6 ${
-              !selectedCell ? 'opacity-40' : ''
-            }`}
+            className={`h-12 flex-row items-center justify-center gap-1.5 rounded-xl border border-cardBorder bg-card px-6 ${!selectedCell ? 'opacity-40' : ''
+              }`}
           >
             <Text className="text-xs">≡</Text>
             <Text className="font-orbitron-black text-xs text-text-main">
@@ -310,9 +317,8 @@ export const SudokuScreen: React.FC = () => {
           <TouchableOpacity
             onPress={handleRedo}
             disabled={redoStack.length === 0}
-            className={`h-12 w-14 items-center justify-center rounded-xl border border-cardBorder bg-card ${
-              redoStack.length === 0 ? 'opacity-40' : ''
-            }`}
+            className={`h-12 w-14 items-center justify-center rounded-xl border border-cardBorder bg-card ${redoStack.length === 0 ? 'opacity-40' : ''
+              }`}
           >
             <Text className="text-base text-text-main">↷</Text>
           </TouchableOpacity>
@@ -362,4 +368,29 @@ export const SudokuScreen: React.FC = () => {
       />
     </ScreenContainer>
   );
+};
+
+
+const isCellInvalid = (row: number, col: number, board: number[][]): boolean => {
+  const value = board[row][col];
+  if (value === 0) return false; // Empty cells are not invalid
+
+  for (let c = 0; c < 6; c++) {
+    if (c !== col && board[row][c] === value) return true;
+  }
+
+  for (let r = 0; r < 6; r++) {
+    if (r !== row && board[r][col] === value) return true;
+  }
+
+  const startRow = Math.floor(row / 2) * 2;
+  const startCol = Math.floor(col / 3) * 3;
+
+  for (let r = startRow; r < startRow + 2; r++) {
+    for (let c = startCol; c < startCol + 3; c++) {
+      if ((r !== row || c !== col) && board[r][c] === value) return true;
+    }
+  }
+
+  return false;
 };
