@@ -97,25 +97,27 @@ export default function ProfileScreen() {
           {/* BACKGROUND WATERMARK TEXT (Top Right Aligned) */}
           <View
             aria-hidden={true}
-            className="absolute top-3 right-3 items-end pointer-events-none opacity-25"
+            accessibilityElementsHidden={true}
+            importantForAccessibility="no-hide-descendants"
+            className="absolute top-4 right-3 items-end pointer-events-none opacity-25"
           >
             <Text
               style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
               className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
             >
-              THINK FAST.
+              THINK FAST
             </Text>
             <Text
               style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
               className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
             >
-              WIN LOUDER.
+              WIN LOUDER
             </Text>
             <Text
               style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.primary }}
               className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
             >
-              PLAY IT SMART.
+              PLAY IT SMART
             </Text>
           </View>
 
