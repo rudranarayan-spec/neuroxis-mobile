@@ -4,7 +4,6 @@ import {
   Text,
   TouchableOpacity,
   ActivityIndicator,
-  Alert,
   StatusBar,
 } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -12,6 +11,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { gameApi } from '../services/gameApi';
 import { CellPosition, HistoryStep, Puzzle } from '../types/games.types';
 import { ExitModal, GuideModal, SuccessModal } from '../components/sudoku/SudokuModals';
+import { showGameToast } from '../utils/toast';
 
 export const SudokuScreen: React.FC = () => {
   const router = useRouter();
@@ -68,9 +68,10 @@ export const SudokuScreen: React.FC = () => {
 
       startTimer();
     } catch (error: any) {
-      Alert.alert(
-        'Error',
-        error.response?.data?.message || 'Failed to initialize game session.'
+      showGameToast(
+        'Initialization Failed',
+        error.response?.data?.message || 'Failed to initialize game session.',
+        'error'
       );
     } finally {
       setLoading(false);
@@ -148,8 +149,7 @@ export const SudokuScreen: React.FC = () => {
   };
 
   const handleHintPress = () => {
-    // Placeholder for future hint implementation
-    Alert.alert('Hint System', 'Hint feature coming soon!');
+    showGameToast('Hint System', 'Hint feature coming soon!', 'info');
   };
 
   const handleSubmit = async (boardToSubmit = userBoard) => {
@@ -162,10 +162,6 @@ export const SudokuScreen: React.FC = () => {
       setGameResult({ xpEarned: result.xpEarned });
       setShowSuccessModal(true);
     } catch (error: any) {
-      Alert.alert(
-        'Verification Failed',
-        error.response?.data?.message || 'Incorrect decryption sequence. Try again.'
-      );
       startTimer();
     } finally {
       setSubmitting(false);
@@ -188,6 +184,16 @@ export const SudokuScreen: React.FC = () => {
       </ScreenContainer>
     );
   }
+
+  const handleOpenGuide = () => {
+    stopTimer();
+    setShowGuideModal(true);
+  };
+
+  const handleCloseGuide = () => {
+    setShowGuideModal(false);
+    startTimer();
+  };
 
   return (
     <ScreenContainer className="flex-1 bg-[#121212] px-4 pt-2">
@@ -223,7 +229,7 @@ export const SudokuScreen: React.FC = () => {
 
           {/* INFO / GUIDE ICON BUTTON */}
           <TouchableOpacity
-            onPress={() => setShowGuideModal(true)}
+            onPress={handleOpenGuide}
             className="h-10 w-10 items-center justify-center rounded-xl border border-cardBorder bg-card"
           >
             <Text className="font-orbitron-bold text-sm text-accentGreen">ⓘ</Text>
@@ -345,15 +351,22 @@ export const SudokuScreen: React.FC = () => {
       <ExitModal
         visible={showExitModal}
         onCancel={() => setShowExitModal(false)}
-        onConfirmExit={() => {
+        onConfirmExit={async () => {
           setShowExitModal(false);
+          if (sessionId) {
+            try {
+              await gameApi.abandonGame(sessionId, timer);
+            } catch (error) {
+              console.error('Failed to log abandoned session:', error);
+            }
+          }
           router.back();
         }}
       />
 
       <GuideModal
         visible={showGuideModal}
-        onClose={() => setShowGuideModal(false)}
+        onClose={handleCloseGuide}
       />
 
       <SuccessModal

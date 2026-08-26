@@ -38,3 +38,18 @@ export interface HistoryStep {
   previousValue: number;
   newValue: number;
 }
+
+export interface AbandonGameResponse {
+  message: string;
+  session: {
+    _id: string;
+    userId: string;
+    gameId: string;
+    puzzleId?: string;
+    status: 'ABANDONED';
+    startTime: string;
+    endTime: string;
+    durationInSeconds: number;
+    xpEarned: number;
+  };
+}

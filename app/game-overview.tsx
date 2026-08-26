@@ -5,111 +5,156 @@ import { ScreenContainer } from '../src/components/ScreenContainer';
 import { GuideModal } from '../src/components/sudoku/SudokuModals';
 
 export const GameOverviewScreen: React.FC = () => {
-    const router = useRouter();
-    const params = useLocalSearchParams<{ gameId?: string; title?: string; route?: string }>();
+  const router = useRouter();
+  const params = useLocalSearchParams<{ gameId?: string; title?: string; route?: string }>();
 
-    const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
+  const [showGuideModal, setShowGuideModal] = useState<boolean>(false);
 
-    // Fallback defaults or dynamic values passed via query params
-    const gameTitle = params.title || 'MATRIX SUDOKU';
-    const gameId = params.gameId || 'sudoku';
+  const gameTitle = params.title || 'MATRIX SUDOKU';
+  const gameId = params.gameId || 'sudoku';
 
+  const handlePlayNow = () => {
+    const targetRoute = params.route || `/${params.gameId}`;
+    router.push(targetRoute as any);
+  };
 
-    const handlePlayNow = () => {
-        // Use explicit route parameter or fallback to /game/[id] layout
-        const targetRoute = params.route || `/${params.gameId}`;
-        router.push(targetRoute as any);
-    };
+  return (
+    <ScreenContainer className="flex-1 bg-[#101010] px-4 pt-2">
+      <StatusBar barStyle="light-content" backgroundColor="#101010" />
 
-    return (
-        <ScreenContainer className="flex-1 bg-[#121212] px-4 pt-2">
-            <StatusBar barStyle="light-content" backgroundColor="#121212" />
+      {/* HEADER */}
+      <View className="mb-4 flex-row items-center justify-between">
+        <TouchableOpacity
+          onPress={() => router.back()}
+          className="h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-[#1A1A1A] active:bg-[#252525]"
+        >
+          <Text className="font-orbitron-bold text-base text-text-main">←</Text>
+        </TouchableOpacity>
 
-            {/* HEADER */}
-            <View className="mb-6 flex-row items-center justify-between">
-                <TouchableOpacity
-                    onPress={() => router.back()}
-                    className="h-10 w-10 items-center justify-center rounded-xl border border-cardBorder bg-card"
-                >
-                    <Text className="font-orbitron-black text-lg text-text-main">←</Text>
-                </TouchableOpacity>
+        <View className="rounded-full border border-white/10 bg-[#1A1A1A] px-4 py-1.5">
+          <Text className="font-orbitron-bold text-xs tracking-widest text-text-muted">
+            MISSION LOBBY
+          </Text>
+        </View>
 
-                <Text className="font-orbitron-bold text-sm tracking-widest text-text-muted">
-                    GAME LOBBY
-                </Text>
+        <TouchableOpacity
+          onPress={() => setShowGuideModal(true)}
+          className="h-11 w-11 items-center justify-center rounded-2xl border border-white/10 bg-[#1A1A1A] active:bg-[#252525]"
+        >
+          <Text className="font-orbitron-bold text-base text-[#B5F23D]">ⓘ</Text>
+        </TouchableOpacity>
+      </View>
 
-                {/* INFO / HOW TO PLAY BUTTON */}
-                <TouchableOpacity
-                    onPress={() => setShowGuideModal(true)}
-                    className="h-10 w-10 items-center justify-center rounded-xl border border-cardBorder bg-card"
-                >
-                    <Text className="font-orbitron-bold text-sm text-accentGreen">ⓘ</Text>
-                </TouchableOpacity>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 24 }}>
+        
+        {/* HERO CARD */}
+        <View className="relative overflow-hidden rounded-3xl border border-white/10 bg-[#1A1A1A] p-6 shadow-2xl">
+          {/* Decorative Corner Accent */}
+          <View className="absolute -top-10 -right-10 h-32 w-32 rounded-full bg-[#B5F23D]/10 blur-xl" />
+
+          <View className="flex-row items-center gap-4">
+            <View className="h-16 w-16 items-center justify-center rounded-2xl border border-[#B5F23D]/30 bg-[#B5F23D]/10">
+              <Text className="text-3xl">🧩</Text>
             </View>
 
-            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 32 }}>
-                {/* GAME BANNER / HERO CARD */}
-                <View className="items-center rounded-3xl border-2 border-accentGreen/40 bg-card p-6 text-center shadow-lg">
-                    <View className="mb-3 h-16 w-16 items-center justify-center rounded-2xl bg-accentGreen/10 border border-accentGreen/30">
-                        <Text className="text-3xl">🧩</Text>
-                    </View>
-                    <Text className="font-orbitron-black text-2xl text-accentGreen">{gameTitle}</Text>
-                    <Text className="mt-2 text-center font-rajdhani-medium text-sm text-text-muted">
-                        Decrypt the matrix grid sequence under time pressure. Fill missing blocks without breaking row, column, or sub-grid integrity.
-                    </Text>
-                </View>
+            <View className="flex-1">
+              <Text className="font-orbitron-black text-2xl tracking-wide text-text-main">
+                {gameTitle}
+              </Text>
+              <Text className="mt-1 font-rajdhani-bold text-xs uppercase tracking-widest text-[#B5F23D]">
+                CLASSIFIED DECRYPTION
+              </Text>
+            </View>
+          </View>
 
-                {/* REWARDS & STATS OVERVIEW */}
-                <View className="mt-6 flex-row gap-3">
-                    <View className="flex-1 rounded-2xl border border-cardBorder bg-card p-4">
-                        <Text className="font-rajdhani-bold text-xs text-text-muted">BASE REWARD</Text>
-                        <Text className="mt-1 font-orbitron-bold text-lg text-accentGreen">+50 XP</Text>
-                    </View>
-                    <View className="flex-1 rounded-2xl border border-cardBorder bg-card p-4">
-                        <Text className="font-rajdhani-bold text-xs text-text-muted">EST. TIME</Text>
-                        <Text className="mt-1 font-orbitron-bold text-lg text-text-main">3-5 MIN</Text>
-                    </View>
-                    <View className="flex-1 rounded-2xl border border-cardBorder bg-card p-4">
-                        <Text className="font-rajdhani-bold text-xs text-text-muted">GRID SIZE</Text>
-                        <Text className="mt-1 font-orbitron-bold text-lg text-text-main">6x6</Text>
-                    </View>
-                </View>
+          <Text className="mt-4 font-rajdhani-medium text-sm leading-relaxed text-text-muted">
+            Decrypt the matrix grid sequence under time pressure. Complete missing blocks without breaking row, column, or sub-grid integrity.
+          </Text>
+        </View>
 
-                {/* HINTS & STRATEGY SECTION */}
-                <View className="mt-6 rounded-2xl border border-cardBorder bg-card p-5">
-                    <View className="flex-row items-center gap-2 mb-3">
-                        <Text className="text-lg">💡</Text>
-                        <Text className="font-orbitron-bold text-sm text-text-main">TACTICAL HINTS</Text>
-                    </View>
+        {/* SPEED BONUS BADGE */}
+        <View className="mt-4 flex-row items-center justify-between rounded-2xl border border-[#B5F23D]/30 bg-[#B5F23D]/5 px-5 py-3.5">
+          <View className="flex-row items-center gap-3">
+            <Text className="text-xl">⚡</Text>
+            <View>
+              <Text className="font-orbitron-bold text-xs text-text-main">SPEED RUN REWARD</Text>
+              <Text className="font-rajdhani-medium text-xs text-text-muted">Finish in under 2:00 mins</Text>
+            </View>
+          </View>
+          <View className="rounded-xl border border-[#B5F23D]/40 bg-[#B5F23D]/20 px-3 py-1">
+            <Text className="font-orbitron-black text-xs text-[#B5F23D]">+20 EXTRA XP</Text>
+          </View>
+        </View>
 
-                    <View className="gap-2">
-                        <Text className="font-rajdhani-medium text-xs text-text-muted">
-                            • Scan sub-grids with 4 or 5 pre-filled numbers first to quickly eliminate obvious choices.
-                        </Text>
-                        <Text className="font-rajdhani-medium text-xs text-text-muted">
-                            • Misplaced entries can cause verification failures at auto-submission. Use UNDO to roll back mistakes.
-                        </Text>
-                    </View>
-                </View>
-            </ScrollView>
+        {/* METRICS GRID */}
+        <View className="mt-4 flex-row flex-wrap justify-between gap-y-3">
+          <View className="w-[48%] rounded-2xl border border-white/10 bg-[#1A1A1A] p-4">
+            <Text className="font-rajdhani-bold text-[10px] tracking-widest text-text-muted">BASE REWARD</Text>
+            <Text className="mt-1 font-orbitron-black text-xl text-[#B5F23D]">+50 XP</Text>
+          </View>
 
-            {/* BOTTOM ACTION BUTTON */}
-            <View className="mb-6 pt-2">
-                <TouchableOpacity
-                    onPress={handlePlayNow}
-                    className="items-center justify-center rounded-2xl bg-accentGreen py-4 shadow-lg shadow-accentGreen/20"
-                >
-                    <Text className="font-orbitron-black text-base text-black">PLAY NOW</Text>
-                </TouchableOpacity>
+          <View className="w-[48%] rounded-2xl border border-white/10 bg-[#1A1A1A] p-4">
+            <Text className="font-rajdhani-bold text-[10px] tracking-widest text-text-muted">GRID CONFIG</Text>
+            <Text className="mt-1 font-orbitron-black text-xl text-text-main">6 x 6 MATRIX</Text>
+          </View>
+
+          <View className="w-[48%] rounded-2xl border border-white/10 bg-[#1A1A1A] p-4">
+            <Text className="font-rajdhani-bold text-[10px] tracking-widest text-text-muted">TARGET TIME</Text>
+            <Text className="mt-1 font-orbitron-black text-xl text-text-main">&lt; 3:00 MIN</Text>
+          </View>
+
+          <View className="w-[48%] rounded-2xl border border-white/10 bg-[#1A1A1A] p-4">
+            <Text className="font-rajdhani-bold text-[10px] tracking-widest text-text-muted">DIFFICULTY</Text>
+            <Text className="mt-1 font-orbitron-black text-xl text-text-main">NOVICE</Text>
+          </View>
+        </View>
+
+        {/* BRIEFING & TIPS */}
+        <View className="mt-4 rounded-3xl border border-white/10 bg-[#1A1A1A] p-5">
+          <View className="mb-3 flex-row items-center gap-2">
+            <Text className="text-base">🎯</Text>
+            <Text className="font-orbitron-bold text-xs tracking-wider text-text-main">TACTICAL INTEL</Text>
+          </View>
+
+          <View className="gap-2.5">
+            <View className="flex-row items-start gap-2">
+              <Text className="text-[#B5F23D]">•</Text>
+              <Text className="flex-1 font-rajdhani-medium text-xs leading-5 text-text-muted">
+                Scan sub-grids containing 4 or 5 pre-filled numbers first to quickly isolate missing entries.
+              </Text>
             </View>
 
-            {/* REUSED GUIDE MODAL */}
-            <GuideModal
-                visible={showGuideModal}
-                onClose={() => setShowGuideModal(false)}
-            />
-        </ScreenContainer>
-    );
+            <View className="flex-row items-start gap-2">
+              <Text className="text-[#B5F23D]">•</Text>
+              <Text className="flex-1 font-rajdhani-medium text-xs leading-5 text-text-muted">
+                Conflict detection will highlight duplicate numbers in red automatically.
+              </Text>
+            </View>
+          </View>
+        </View>
+
+      </ScrollView>
+
+      {/* FOOTER CALL TO ACTION */}
+      <View className="mb-6 pt-2">
+        <TouchableOpacity
+          onPress={handlePlayNow}
+          activeOpacity={0.8}
+          className="items-center justify-center rounded-2xl bg-[#b6f23dcc] py-4 shadow-xl shadow-[#B5F23D]/20 active:bg-[#a2dc33]"
+        >
+          <Text className="font-orbitron-black text-base tracking-wider text-black">
+            START
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* GUIDE MODAL */}
+      <GuideModal
+        visible={showGuideModal}
+        onClose={() => setShowGuideModal(false)}
+      />
+    </ScreenContainer>
+  );
 };
 
 export default GameOverviewScreen;
