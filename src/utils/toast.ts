@@ -8,7 +8,6 @@ export const showGameToast = (
   message: string,
   type: ToastType = 'info'
 ) => {
-  // Map 'success' -> 'done' and 'info' -> 'none' for Burnt's API
   const presetMap: Record<ToastType, 'error' | 'done' | 'none'> = {
     error: 'error',
     success: 'done',

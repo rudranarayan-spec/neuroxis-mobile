@@ -38,13 +38,13 @@ const TOP_GAMES: GameItem[] = [
     isAvailable: true, 
   },
   {
-    id: 'memory_matrix',
-    title: 'Pattern Recall',
+    id: 'echoPattern',
+    title: 'Eco Pattern',
     category: 'Memory & Speed',
     rating: 4.7,
     xpReward: '+40 XP',
-    route: '/game/pattern-recall',
-    isAvailable: false,
+    route: '/game/echoPattern',
+    isAvailable: true,
   },
   {
     id: 'sequence_breaker',

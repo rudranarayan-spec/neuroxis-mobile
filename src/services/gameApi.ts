@@ -6,6 +6,7 @@ import {
   Difficulty,
   AbandonGameResponse,
   SubmitGamePayload,
+  StartGamePayload,
 } from "../types/games.types";
 
 export const gameApi = {
@@ -23,18 +24,14 @@ export const gameApi = {
     return response.data;
   },
 
+  // Accepts dynamic parameters for sequence games as well as puzzle games
   startGame: async (
-    gameId: string,
-    puzzleId: string,
+    payload: StartGamePayload,
   ): Promise<StartGameResponse> => {
-    const response = await apiClient.post<StartGameResponse>("/game/start", {
-      gameId,
-      puzzleId,
-    });
+    const response = await apiClient.post<StartGameResponse>("/game/start", payload);
     return response.data;
   },
 
-  // Flexible submission for standard matrix games and region-based games like Shikaku
   submitGame: async (
     payload: SubmitGamePayload,
   ): Promise<SubmitGameResponse> => {

@@ -2,6 +2,6 @@
 import React from 'react';
 import { ShikakuScreen } from '../../src/screens/ShikakuScreen';
 
-export default function SudokuRoute() {
+export default function ShikakuRoute() {
   return <ShikakuScreen/>;
 }

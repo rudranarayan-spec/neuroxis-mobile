@@ -1,29 +1,4 @@
-/**
- * ShikakuScreen — premium, fully-responsive rebuild.
- *
- * Requires (if not already present in the project):
- *   npx expo install expo-haptics
- *
- * Key fixes vs. the previous version:
- *  1. Drag-to-select is now driven by a single PanResponder on the grid
- *     container instead of per-cell onMouseDown/onTouchStart handlers.
- *     RN does not fire per-cell touch-move events like the DOM does, so the
- *     old "web-only" mouse handlers were the only thing that ever actually
- *     worked — native drag was broken. PanResponder tracks the finger
- *     continuously and works identically on iOS, Android and web.
- *  2. Overlapping a new rectangle with an existing one no longer silently
- *     deletes the existing region. It's rejected with feedback instead.
- *  3. Live rule validation: a region is colored green only when it contains
- *     exactly one number equal to its own area — same as the real Shikaku
- *     rule — so users get instant feedback instead of a black-box
- *     "auto submit on full coverage" behaviour.
- *  4. Tap an existing region to delete it (fast correction, no need to hunt
- *     for the undo button for a single mistake).
- *  5. Haptic feedback, a live "regions solved" progress pill, and a rules
- *     hint so first-time players understand the interaction immediately.
- *  6. useWindowDimensions instead of a one-time Dimensions.get() read, so
- *     the board re-flows correctly on rotation / foldables / web resize.
- */
+
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
@@ -158,7 +133,11 @@ export const ShikakuScreen: React.FC = () => {
       const puzzleData = await gameApi.getPuzzle('shikaku', 'EASY', 5);
       setPuzzle(puzzleData.puzzle);
 
-      const sessionData = await gameApi.startGame('shikaku', puzzleData.puzzle._id);
+      // Fixed payload object structure & corrected puzzleData reference
+      const sessionData = await gameApi.startGame({
+        gameId: 'shikaku',
+        puzzleId: puzzleData.puzzle._id,
+      });
       setSessionId(sessionData.sessionId);
 
       startTimer();

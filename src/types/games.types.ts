@@ -21,10 +21,18 @@ export interface GetPuzzleResponse {
   message?: string;
 }
 
+export interface StartGamePayload {
+  gameId: string;
+  puzzleId?: string;          
+  sequenceLength?: number;    
+  gridSize?: number;           
+}
+
 export interface StartGameResponse {
   success: boolean;
   sessionId: string;
   startTime: string;
+  sequence?: number[];          // Returned for Echo Pattern sessions
 }
 
 export interface SubmitGameResponse {
@@ -35,11 +43,12 @@ export interface SubmitGameResponse {
   currentStreak?: number;
 }
 
-// Updated Payload to support both Sudoku (userBoard) and Shikaku (rects)
+// Updated Payload supporting Sudoku (userBoard), Shikaku (rects), and Echo Pattern (userSequence)
 export interface SubmitGamePayload {
   sessionId: string;
   userBoard?: number[][];
   rects?: ShikakuRect[];
+  userSequence?: number[];     // Added for Echo Pattern tap validation
   clientTimeElapsed: number;
 }
 

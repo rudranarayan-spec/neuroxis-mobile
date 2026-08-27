@@ -63,7 +63,11 @@ export const SudokuScreen: React.FC = () => {
       setPuzzle(puzzleData.puzzle);
       setUserBoard(puzzleData.puzzle.board.map((row) => [...row]));
 
-      const sessionData = await gameApi.startGame('sudoku', puzzleData.puzzle._id);
+      // Pass as a single object payload matching StartGamePayload interface
+      const sessionData = await gameApi.startGame({
+        gameId: 'sudoku',
+        puzzleId: puzzleData.puzzle._id,
+      });
       setSessionId(sessionData.sessionId);
 
       startTimer();
