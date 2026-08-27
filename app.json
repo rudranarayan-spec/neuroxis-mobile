@@ -1,6 +1,7 @@
 {
   "expo": {
     "name": "Neuroxis",
+    "description": "Play it smart.",
     "slug": "neuroxis-mobile",
     "version": "1.0.0",
     "orientation": "portrait",

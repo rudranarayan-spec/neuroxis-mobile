@@ -25,7 +25,7 @@ apiClient.interceptors.request.use(
     const fullUrl = `${config.baseURL || ''}${config.url || ''}`;
 
     // Log HTTP Request
-    logger.info(`[API REQUEST] ${method} -> ${fullUrl}`);
+    logger.info(accent.bgCyan(`[API REQUEST] ${method} -> ${fullUrl}`));
     if (config.data) {
       console.log(accent.cyan(`Payload: ${JSON.stringify(config.data, null, 2)}`));
     }
@@ -33,7 +33,7 @@ apiClient.interceptors.request.use(
     return config;
   },
   (error) => {
-    logger.error(`[API REQUEST ERROR] ${error.message}`);
+    logger.error(accent.red(`[API REQUEST ERROR] ${error.message}`));
     return Promise.reject(error);
   }
 );
@@ -46,7 +46,7 @@ apiClient.interceptors.response.use(
     const status = response.status;
 
     // Log HTTP Success Response
-    logger.success(`[API RESPONSE] ${status} ${method} -> ${url}`);
+    logger.success(accent.green(`[API RESPONSE] ${status} ${method} -> ${url}`));
     console.log(accent.green(`Data: ${JSON.stringify(response.data, null, 2)}`));
 
     return response;
@@ -58,11 +58,11 @@ apiClient.interceptors.response.use(
     const errorData = error.response?.data || error.message;
 
     // Log HTTP Failure
-    logger.error(`[API ERROR] ${status || 'NET_ERR'} ${method} -> ${url}`);
+    logger.error(accent.red(`[API ERROR] ${status || 'NET_ERR'} ${method} -> ${url}`));
     console.log(accent.red(`Details: ${JSON.stringify(errorData, null, 2)}`));
 
     if (status === 401) {
-      logger.warn('[AUTH] Token expired or invalid. Removing credentials...');
+      logger.warn(accent.bgYellow('[AUTH] Token expired or invalid. Removing credentials...'));
       await tokenStorage.removeToken();
     }
 

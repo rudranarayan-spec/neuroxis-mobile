@@ -128,7 +128,7 @@ export default function HomeScreen() {
             </View>
 
             {/* Welcome Greeting */}
-            <View className="mt-1 flex flex-row align-middle gap-1">
+            <View className="mt-1 ml-3 flex flex-row align-middle gap-1">
               <Text className="font-rajdhani text-md font-semibold text-text-muted">
                 WELCOME BACK
               </Text>
@@ -148,7 +148,7 @@ export default function HomeScreen() {
 
         {/* 3. CONSOLIDATED STATS GRID (ONLY 4 BOXES) */}
         <View className="mb-6">
-          <Text className="mb-3 font-rajdhani-bold text-base text-text-main">
+          <Text className="ml-3 mb-3 font-rajdhani-bold text-base text-text-main">
             Stats Overview
           </Text>
 
@@ -221,10 +221,10 @@ export default function HomeScreen() {
         {/* 5. TOP RATED GAMES */}
         <View className="mb-6">
           <View className="mb-3 flex-row items-center justify-between">
-            <Text className="font-rajdhani-bold text-base text-text-main">
+            <Text className="ml-3 font-rajdhani-bold text-base text-text-main">
               Top Rated Games
             </Text>
-            <Text className="font-rajdhani text-xs text-text-muted">
+            <Text className="font-rajdhani text-xs text-text-muted mr-3">
               {TOP_GAMES.length} MODULES
             </Text>
           </View>
