@@ -1,29 +1,37 @@
 {
   "expo": {
-    "name": "neuroxis-mobile",
+    "name": "Neuroxis",
     "slug": "neuroxis-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
+    "backgroundColor": "#000000",
+    "icon": "./assets/images/logo.png",
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#090D16"
+        "foregroundImage": "./assets/images/logo.png",
+        "backgroundColor": "#000000"
       },
-      "edgeToEdge": true,
-      "statusBar": {
-        "barStyle": "light-content",
-        "backgroundColor": "#090D16"
-      },
-      "navigationBar": {
-        "barStyle": "light-content",
-        "backgroundColor": "#090D16"
-      }
+      "package": "com.akash0101.neuroxismobile"
     },
     "ios": {
       "supportsTablet": false
     },
     "plugins": [
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "resizeMode": "contain",
+          "backgroundColor": "#000000",
+          "dark": {
+            "image": "./assets/images/splash-icon.png",
+            "backgroundColor": "#000000"
+          },
+          "imageWidth": 160
+        }
+      ]
     ]
   }
 }

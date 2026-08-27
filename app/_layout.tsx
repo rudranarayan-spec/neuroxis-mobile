@@ -35,7 +35,7 @@ function InitialLayout() {
 
   if (isLoading) {
     return (
-      <View className="flex-1 items-center justify-center bg-background">
+      <View style={{ flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' }}>
         <ActivityIndicator size="large" color="#B5F23D" />
       </View>
     );
@@ -56,14 +56,15 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded) {
-      SplashScreen.hideAsync();
+      // Hide native splash screen seamlessly once fonts are loaded
+      SplashScreen.hideAsync().catch(() => {});
     }
   }, [fontsLoaded]);
 
   if (!fontsLoaded) {
     return (
-      <SafeAreaProvider>
-        <View className="flex-1 items-center justify-center bg-background">
+      <SafeAreaProvider style={{ backgroundColor: '#000000' }}>
+        <View style={{ flex: 1, backgroundColor: '#000000', alignItems: 'center', justifyContent: 'center' }}>
           <ActivityIndicator size="large" color="#B5F23D" />
         </View>
       </SafeAreaProvider>
@@ -71,19 +72,19 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
+    <SafeAreaProvider style={{ backgroundColor: '#000000' }}>
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <ConfirmProvider>
-          <StatusBar style="light" backgroundColor="#121212" translucent />
-          <View className="flex-1 bg-background">
-            <InitialLayout />
-            {!splashFinished && (
-              <View className="absolute inset-0 z-50">
-                <CustomSplashScreen onFinish={() => setSplashFinished(true)} />
-              </View>
-            )}
-          </View>
+            <StatusBar style="light" backgroundColor="#000000" translucent />
+            <View style={{ flex: 1, backgroundColor: '#000000' }}>
+              <InitialLayout />
+              {!splashFinished && (
+                <View className="absolute inset-0 z-50 bg-[#000000]">
+                  <CustomSplashScreen onFinish={() => setSplashFinished(true)} />
+                </View>
+              )}
+            </View>
           </ConfirmProvider>
         </AuthProvider>
       </QueryClientProvider>
