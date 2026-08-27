@@ -1,5 +1,12 @@
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
+export interface ShikakuRect {
+  r1: number;
+  c1: number;
+  r2: number;
+  c2: number;
+}
+
 export interface Puzzle {
   _id: string;
   gameId: string;
@@ -25,6 +32,15 @@ export interface SubmitGameResponse {
   message: string;
   xpEarned: number;
   durationInSeconds: number;
+  currentStreak?: number;
+}
+
+// Updated Payload to support both Sudoku (userBoard) and Shikaku (rects)
+export interface SubmitGamePayload {
+  sessionId: string;
+  userBoard?: number[][];
+  rects?: ShikakuRect[];
+  clientTimeElapsed: number;
 }
 
 export interface CellPosition {

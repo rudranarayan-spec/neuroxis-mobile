@@ -46,7 +46,7 @@ export default function LoginScreen() {
             {/* Header */}
             <View className="mb-6 items-center text-center">
               <Text className="font-rajdhani-bold text-xs uppercase tracking-[0.25em]" style={{ color: COLORS.primary }}>
-                AUTHENTICATION_NODE
+                NEUROXIS
               </Text>
               <Text className="mt-1 font-orbitron-black text-2xl font-bold" style={{ color: COLORS.textMain }}>
                 WELCOME <Text style={{ color: COLORS.primary }}>BACK</Text>

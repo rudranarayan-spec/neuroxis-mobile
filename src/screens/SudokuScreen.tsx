@@ -10,8 +10,8 @@ import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { gameApi } from '../services/gameApi';
 import { CellPosition, HistoryStep, Puzzle } from '../types/games.types';
-import { ExitModal, GuideModal, SuccessModal } from '../components/sudoku/SudokuModals';
 import { showGameToast } from '../utils/toast';
+import { ExitModal, GuideModal, SuccessModal } from '../components/GameModals';
 
 export const SudokuScreen: React.FC = () => {
   const router = useRouter();
@@ -158,7 +158,13 @@ export const SudokuScreen: React.FC = () => {
     try {
       setSubmitting(true);
       stopTimer();
-      const result = await gameApi.submitGame(sessionId, boardToSubmit, timer);
+
+      const result = await gameApi.submitGame({
+        sessionId,
+        userBoard: boardToSubmit,
+        clientTimeElapsed: timer,
+      });
+
       setGameResult({ xpEarned: result.xpEarned });
       setShowSuccessModal(true);
     } catch (error: any) {
@@ -365,12 +371,14 @@ export const SudokuScreen: React.FC = () => {
       />
 
       <GuideModal
+        gameId="Sudoku"
         visible={showGuideModal}
         onClose={handleCloseGuide}
       />
 
       <SuccessModal
         visible={showSuccessModal}
+        gameId="Sudoku"
         timeFormatted={formatTime(timer)}
         xpEarned={gameResult?.xpEarned || 0}
         onPlayAgain={initGame}
@@ -407,3 +415,9 @@ const isCellInvalid = (row: number, col: number, board: number[][]): boolean => 
 
   return false;
 };
+
+const SUDOKU_RULES = [
+  'Fill the grid so every row contains numbers 1 to 6 without duplicates.',
+  'Every column must contain numbers 1 to 6 with no repeats.',
+  'Each 2x3 box must contain digits 1 through 6.',
+];

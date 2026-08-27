@@ -5,6 +5,7 @@ import {
   SubmitGameResponse,
   Difficulty,
   AbandonGameResponse,
+  SubmitGamePayload,
 } from "../types/games.types";
 
 export const gameApi = {
@@ -33,16 +34,14 @@ export const gameApi = {
     return response.data;
   },
 
+  // Flexible submission for standard matrix games and region-based games like Shikaku
   submitGame: async (
-    sessionId: string,
-    userBoard: number[][],
-    clientTimeElapsed: number,
+    payload: SubmitGamePayload,
   ): Promise<SubmitGameResponse> => {
-    const response = await apiClient.post<SubmitGameResponse>("/game/submit", {
-      sessionId,
-      userBoard,
-      clientTimeElapsed,
-    });
+    const response = await apiClient.post<SubmitGameResponse>(
+      "/game/submit",
+      payload,
+    );
     return response.data;
   },
 

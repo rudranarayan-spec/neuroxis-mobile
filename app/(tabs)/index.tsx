@@ -8,16 +8,6 @@ import { dashboardService } from '../../src/services/dashboardService';
 import { TimeframeFilter } from '../../src/types/dashboard';
 import { Flame, Shield, Zap } from 'lucide-react-native';
 
-const mapFilterToTimeframe = (tab: string): TimeframeFilter => {
-  switch (tab) {
-    case 'TODAY': return 'TODAY';
-    case '7 DAYS': return '7_DAYS';
-    case '30 DAYS': return '30_DAYS';
-    case 'ALL TIME': return 'ALL_TIME';
-    default: return 'ALL_TIME';
-  }
-};
-
 interface GameItem {
   id: string;
   title: string;
@@ -37,6 +27,15 @@ const TOP_GAMES: GameItem[] = [
     xpReward: '+50 XP',
     route: '/game/sudoku',
     isAvailable: true,
+  },
+  {
+    id: 'shikaku',
+    title: 'Shikaku Rectangles',
+    category: 'Spatial & Geometry',
+    rating: 4.8,
+    xpReward: '+40 XP',
+    route: '/game/shikaku',
+    isAvailable: true, 
   },
   {
     id: 'memory_matrix',
@@ -62,7 +61,6 @@ export default function HomeScreen() {
   const { user } = useAuth();
   const router = useRouter();
 
-  const filterTabs = ['TODAY', '7 DAYS', '30 DAYS', 'ALL TIME'];
 
   const { data: response, isLoading, refetch, isRefetching } = useQuery({
     queryKey: ['dashboardMetrics'],
