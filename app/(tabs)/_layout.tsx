@@ -3,6 +3,7 @@ import { View, Platform } from 'react-native';
 import { Tabs } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Path, Circle, Rect } from 'react-native-svg';
+import { Trophy } from 'lucide-react-native';
 
 // Custom Tab Item Container for smooth visual active indicator state
 const TabItem = ({ focused, children }: { focused: boolean; children: React.ReactNode }) => (
@@ -105,6 +106,15 @@ export default function TabLayout() {
               <ArenaIcon color={color} focused={focused} />
             </TabItem>
           ),
+        }}
+      />
+
+      <Tabs.Screen
+        name="leaderboard"
+        options={{
+          title: 'Leaderboard',
+          tabBarLabel: 'Ranks',
+          tabBarIcon: ({ color, size }) => <Trophy color={color} size={size} />,
         }}
       />
 
