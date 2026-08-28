@@ -5,57 +5,10 @@ import { useRouter } from 'expo-router';
 import { ScreenContainer } from '../../src/components/ScreenContainer';
 import { useAuth } from '../../src/context/AuthContext';
 import { dashboardService } from '../../src/services/dashboardService';
-import { TimeframeFilter } from '../../src/types/dashboard';
 import { Flame, Shield, Zap } from 'lucide-react-native';
+import { GameModulesSection, GameItem } from '../../src/components/GameModulesSection';
 
-interface GameItem {
-  id: string;
-  title: string;
-  category: string;
-  rating: number;
-  xpReward: string;
-  route: string;
-  isAvailable: boolean;
-}
 
-const TOP_GAMES: GameItem[] = [
-  {
-    id: 'sudoku',
-    title: 'Matrix Sudoku 6x6',
-    category: 'Logic & Decryption',
-    rating: 4.9,
-    xpReward: '+50 XP',
-    route: '/game/sudoku',
-    isAvailable: true,
-  },
-  {
-    id: 'shikaku',
-    title: 'Shikaku Rectangles',
-    category: 'Spatial & Geometry',
-    rating: 4.8,
-    xpReward: '+40 XP',
-    route: '/game/shikaku',
-    isAvailable: true, 
-  },
-  {
-    id: 'echoPattern',
-    title: 'Eco Pattern',
-    category: 'Memory & Speed',
-    rating: 4.7,
-    xpReward: '+40 XP',
-    route: '/game/echoPattern',
-    isAvailable: true,
-  },
-  {
-    id: 'sequence_breaker',
-    title: 'Sequence Breaker',
-    category: 'Pattern Analysis',
-    rating: 4.8,
-    xpReward: '+60 XP',
-    route: '/game/sequence-breaker',
-    isAvailable: false,
-  },
-];
 
 export default function HomeScreen() {
   const { user } = useAuth();
@@ -69,14 +22,24 @@ export default function HomeScreen() {
 
   const metrics = response?.data;
 
-  const handlePlayGame = (game: GameItem) => {
-    if (game.isAvailable) {
+  const handleSelectGame = (game: GameItem, mode: 'SOLO' | 'ONLINE') => {
+    if (mode === 'ONLINE') {
+      router.push({
+        pathname: '/matchmaking',
+        params: {
+          gameId: game.id,
+          title: game.title,
+          route: game.route,
+        },
+      });
+    } else {
       router.push({
         pathname: '/game-overview',
         params: {
           gameId: game.id,
           title: game.title,
-          route: game.route
+          route: game.route,
+          mode: 'SOLO',
         },
       });
     }
@@ -219,64 +182,10 @@ export default function HomeScreen() {
         </View>
 
         {/* 5. TOP RATED GAMES */}
-        <View className="mb-6">
-          <View className="mb-3 flex-row items-center justify-between">
-            <Text className="ml-3 font-rajdhani-bold text-base text-text-main">
-              Top Rated Games
-            </Text>
-            <Text className="font-rajdhani text-xs text-text-muted mr-3">
-              {TOP_GAMES.length} MODULES
-            </Text>
-          </View>
-
-          <View className="gap-3">
-            {TOP_GAMES.map((game) => (
-              <TouchableOpacity
-                key={game.id}
-                onPress={() => handlePlayGame(game)}
-                activeOpacity={game.isAvailable ? 0.8 : 1}
-                className={`rounded-2xl border border-cardBorder bg-card p-4 ${!game.isAvailable ? 'opacity-50' : ''
-                  }`}
-              >
-                <View className="flex-row items-center justify-between">
-                  <Text className="font-rajdhani-bold text-xs uppercase tracking-wider text-text-muted">
-                    {game.category}
-                  </Text>
-                  <Text className="font-rajdhani-bold text-xs text-yellow-400">
-                    ★ {game.rating}
-                  </Text>
-                </View>
-
-                <Text className="mt-1 font-orbitron-black text-lg text-text-main">
-                  {game.title}
-                </Text>
-
-                <View className="mt-3 flex-row items-center justify-between">
-                  <Text className="font-rajdhani-bold text-xs text-accentGreen">
-                    {game.xpReward}
-                  </Text>
-
-                  <View
-                    className={`rounded-xl px-4 py-2 border ${game.isAvailable
-                      ? 'border-accentGreen bg-accentGreen/10'
-                      : 'border-cardBorder bg-cardBorder'
-                      }`}
-                  >
-                    <Text
-                      className={`font-rajdhani-bold text-xs ${game.isAvailable ? 'text-accentGreen' : 'text-text-muted'
-                        }`}
-                    >
-                      {game.isAvailable ? 'PLAY NOW' : 'LOCKED'}
-                    </Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            ))}
-          </View>
-        </View>
+        <GameModulesSection onSelectGame={handleSelectGame} />
 
         {/* 6. FEATURED TOURNAMENT CARD */}
-        <View className="rounded-2xl border border-cardBorder bg-card p-4">
+        <View className="rounded-2xl border border-cardBorder bg-card p-4 mb-10">
           <View className="flex-row items-center gap-2">
             <View className="h-2 w-2 rounded-full bg-accentGreen" />
             <Text className="font-rajdhani-bold text-xs uppercase tracking-wider text-text-muted">
