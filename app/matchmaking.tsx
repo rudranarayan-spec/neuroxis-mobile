@@ -44,11 +44,14 @@ const MATCH_FOUND_DELAY_MS = 700;
 export default function MatchmakingScreen() {
   const router = useRouter();
   const { user } = useAuth();
+  // console.log('MatchmakingScreen user:', user);
   const params = useLocalSearchParams<{ gameId: string; title: string; route: string }>();
+  // console.log('MatchmakingScreen params:', params);
 
+  const currentUserId = user?.id || user?._id || `guest_${Math.random().toString(36).substring(7)}`;
   const { isSearching, matchData, findMatch, cancelSearch } = useMatchmaking(
-    user?.id || '',
-    params.gameId || 'echo-pattern'
+    currentUserId,
+    params.gameId || 'echoPattern'
   );
 
   const [elapsed, setElapsed] = useState(0);
@@ -79,7 +82,7 @@ export default function MatchmakingScreen() {
   useEffect(() => {
     if (!matchData) return;
     setMatchFound(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
 
     const timeout = setTimeout(() => {
       if (!isMountedRef.current) return;
@@ -99,7 +102,7 @@ export default function MatchmakingScreen() {
   }, [matchData]);
 
   const handleCancel = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
     cancelSearch();
     router.back();
   };
@@ -200,7 +203,7 @@ export default function MatchmakingScreen() {
               shadowRadius: 20,
               shadowOffset: { width: 0, height: 0 },
             }}
-            className="h-24 w-24 items-center justify-center rounded-full border border-lime-400/40 bg-lime-400/10"
+            className="h-24 w-24 items-center justify-center rounded-full border border-lime-400/40 bg-black"
           >
             <Animated.Image
               source={LOGO_SOURCE}
@@ -242,9 +245,8 @@ export default function MatchmakingScreen() {
 
           <View className="items-center" style={{ width: 76 }}>
             <View
-              className={`h-14 w-14 items-center justify-center rounded-full border-2 ${
-                matchFound ? 'border-lime-400 bg-lime-400/10' : 'border-dashed border-white/20 bg-white/5'
-              }`}
+              className={`h-14 w-14 items-center justify-center rounded-full border-2 ${matchFound ? 'border-lime-400 bg-lime-400/10' : 'border-dashed border-white/20 bg-white/5'
+                }`}
             >
               <CircleUserRound size={22} color={matchFound ? '#B5F23D' : 'rgba(255,255,255,0.3)'} />
             </View>

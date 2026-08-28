@@ -7,21 +7,55 @@ import {
   StatusBar,
   useWindowDimensions,
 } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useMutation } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { gameApi } from '../services/gameApi';
 import { showGameToast } from '../utils/toast';
 import { ExitModal, GuideModal, SuccessModal } from '../components/GameModals';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useAuth } from '../context/AuthContext';
+import { useMatchmaking } from '../hooks/useMatchmaking';
 
 const MAX_BOARD_SIZE = 400;
 const GRID_SIZE = 3;
 const INITIAL_SEQUENCE_LENGTH = 5;
 
+const generateSeededSequence = (seedStr: string, length: number, totalTiles: number): number[] => {
+  let hash = 0;
+  for (let i = 0; i < seedStr.length; i++) {
+    hash = seedStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  const sequence: number[] = [];
+  for (let i = 0; i < length; i++) {
+    const x = Math.sin(hash++) * 10000;
+    const randomIndex = Math.floor((x - Math.floor(x)) * totalTiles);
+    sequence.push(randomIndex);
+  }
+  return sequence;
+};
+
 export const EchoPatternScreen: React.FC = () => {
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
+  const { user } = useAuth();
+
+  const params = useLocalSearchParams<{
+    roomId?: string;
+    puzzleSeed?: string;
+    isMultiplayer?: string;
+    playerA?: string;
+    playerB?: string;
+  }>();
+
+  const isMultiplayer = params.isMultiplayer === 'true';
+
+  const {
+    opponentScore,
+    matchResult,
+    sendScoreUpdate,
+    submitFinalMatch,
+  } = useMatchmaking(user?.id || '', 'echoPattern');
 
   // Core Game States
   const [loading, setLoading] = useState(true);
@@ -89,16 +123,24 @@ export const EchoPatternScreen: React.FC = () => {
       setActiveTileIndex(null);
       setFailedTileIndex(null);
 
-      const sessionData = await gameApi.startGame({
-        gameId: 'echoPattern',
-        sequenceLength: INITIAL_SEQUENCE_LENGTH,
-        gridSize: GRID_SIZE * GRID_SIZE,
-      });
+      let targetSeq: number[] = [];
+
+      if (isMultiplayer && params.puzzleSeed) {
+        // Generate same sequence for both players using seed
+        targetSeq = generateSeededSequence(params.puzzleSeed, INITIAL_SEQUENCE_LENGTH, GRID_SIZE * GRID_SIZE);
+      } else {
+        // Fallback Solo Mode API fetch
+        const sessionData = await gameApi.startGame({
+          gameId: 'echoPattern',
+          sequenceLength: INITIAL_SEQUENCE_LENGTH,
+          gridSize: GRID_SIZE * GRID_SIZE,
+        });
+        setSessionId(sessionData.sessionId);
+        targetSeq = sessionData.sequence || [];
+      }
 
       if (!isMountedRef.current) return;
 
-      setSessionId(sessionData.sessionId);
-      const targetSeq = sessionData.sequence || [];
       setSequence(targetSeq);
       setLoading(false);
 
@@ -106,12 +148,6 @@ export const EchoPatternScreen: React.FC = () => {
         playSequencePreview(targetSeq);
       }
     } catch (error: any) {
-      if (!isMountedRef.current) return;
-      showGameToast(
-        'Initialization Failed',
-        error?.response?.data?.message || 'Failed to initialize game session.',
-        'error'
-      );
       setLoading(false);
     }
   };
@@ -128,7 +164,7 @@ export const EchoPatternScreen: React.FC = () => {
 
       const tileIdx = targetSequence[i];
       setActiveTileIndex(tileIdx);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
 
       await new Promise((resolve) => setTimeout(resolve, 450));
       if (!isMountedRef.current) return;
@@ -144,10 +180,10 @@ export const EchoPatternScreen: React.FC = () => {
   };
 
   const handleTilePress = (tileIndex: number) => {
-    if (isPlaybackActive || submitGameMutation.isPending || loading) return;
+    if (isPlaybackActive || loading) return;
 
     setActiveTileIndex(tileIndex);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
 
     setTimeout(() => {
       if (isMountedRef.current) setActiveTileIndex(null);
@@ -158,8 +194,7 @@ export const EchoPatternScreen: React.FC = () => {
 
     if (tileIndex !== expectedTile) {
       setFailedTileIndex(tileIndex);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
-      showGameToast('Sequence Broken', 'Pattern mismatch. Watch closely!', 'error');
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => { });
 
       setTimeout(() => {
         if (!isMountedRef.current) return;
@@ -172,13 +207,39 @@ export const EchoPatternScreen: React.FC = () => {
     const nextUserSequence = [...userSequence, tileIndex];
     setUserSequence(nextUserSequence);
 
-    if (nextUserSequence.length === sequence.length && sessionId) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      submitGameMutation.mutate({
-        sessionId,
-        userSequence: nextUserSequence,
-        clientTimeElapsed: timer,
-      });
+    // REAL-TIME OPPONENT SYNC: Send live sequence step progress
+    if (isMultiplayer && params.roomId) {
+      sendScoreUpdate(nextUserSequence.length, params.roomId);
+    }
+
+    // GAME COMPLETE
+    if (nextUserSequence.length === sequence.length) {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+      stopTimer();
+
+      if (isMultiplayer && params.roomId) {
+        // Emit Socket Match Submission for 1v1
+        const isPlayerA = params.playerA === user?.id;
+        submitFinalMatch({
+          roomId: params.roomId,
+          playerA: params.playerA || '',
+          playerB: params.playerB || '',
+          scoreA: isPlayerA ? nextUserSequence.length : opponentScore,
+          scoreB: isPlayerA ? opponentScore : nextUserSequence.length,
+          durationMs: timer * 1000,
+          puzzleSeed: params.puzzleSeed || '',
+          gameCategory: 'echoPattern',
+          moveLog: nextUserSequence,
+        });
+        setShowSuccessModal(true);
+      } else if (sessionId) {
+        // Solo REST fallback
+        submitGameMutation.mutate({
+          sessionId,
+          userSequence: nextUserSequence,
+          clientTimeElapsed: timer,
+        });
+      }
     }
   };
 
@@ -253,6 +314,19 @@ export const EchoPatternScreen: React.FC = () => {
             </Text>
           </View>
         </View>
+
+        {/* 1V1 LIVE OPPONENT DISPLAY */}
+        {isMultiplayer && (
+          <View className="mt-2 flex-row items-center justify-between rounded-xl bg-white/5 px-4 py-2 border border-white/10">
+            <Text className="font-rajdhani-bold text-xs text-white/70">
+              YOU: {userSequence.length}/{sequence.length}
+            </Text>
+            <Text className="font-orbitron-bold text-xs text-lime-400">VS</Text>
+            <Text className="font-rajdhani-bold text-xs text-red-400">
+              OPPONENT: {opponentScore}/{sequence.length}
+            </Text>
+          </View>
+        )}
       </View>
 
       {/* MATRIX GRID */}

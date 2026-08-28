@@ -6,14 +6,24 @@ export interface UserStreak {
 }
 
 export interface User {
-  id: string;
+  _id?: string;
+  id?: string;
   username: string;
   email: string;
-  region: string;
-  globalElo: number;
-  xp: number;
-  level: number;
-  streak: UserStreak;
+  xp?: number;
+  level?: number;
+  globalElo?: number;
+  region?: string;
+  district?: string;
+  [key: string]: any;
+}
+
+export interface GetMeResponse {
+  success: boolean;
+  data: {
+    user: User;
+    rank: number;
+  };
 }
 
 export interface AuthResponse {

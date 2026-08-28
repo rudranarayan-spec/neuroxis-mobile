@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { useEffect, useRef, useState } from "react";
+import { io, Socket } from "socket.io-client";
 
 interface MatchStartPayload {
   roomId: string;
@@ -9,80 +9,113 @@ interface MatchStartPayload {
   playerB: string;
 }
 
+const SOCKET_URL =
+  process.env.EXPO_PUBLIC_API_SOCKET_URL || "http://192.168.29.38:5001";
+
 export function useMatchmaking(userId: string, gameCategory: string) {
   const socketRef = useRef<Socket | null>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [matchData, setMatchData] = useState<MatchStartPayload | null>(null);
   const [opponentScore, setOpponentScore] = useState(0);
+  const [matchResult, setMatchResult] = useState<any | null>(null);
 
   useEffect(() => {
-    // 1. Connect to Socket Server
-    // Replace URL with your local IP (e.g., http://192.168.1.X:5001) for physical devices
-    socketRef.current = io(process.env.EXPO_PUBLIC_API_BASE_URL || 'http://192.168.29.38:5001', {
-      transports: ['websocket'],
-    });
+    // 1. Singleton/Reusable Socket Connection
+    if (!socketRef.current) {
+      socketRef.current = io(SOCKET_URL, {
+        transports: ["polling", "websocket"],
+        autoConnect: true,
+        secure: true,
+        reconnection: true,
+        reconnectionAttempts: 10,
+        reconnectionDelay: 1000,
+      });
+    }
 
     const socket = socketRef.current;
 
     // 2. Event Listeners
-    socket.on('MATCH_START', (data: MatchStartPayload) => {
+    const handleMatchStart = (data: MatchStartPayload) => {
       setIsSearching(false);
       setMatchData(data);
-    });
+    };
 
-    socket.on('OPPONENT_SCORE_UPDATE', ({ currentScore }: { currentScore: number }) => {
+    const handleOpponentScore = ({
+      currentScore,
+    }: {
+      currentScore: number;
+    }) => {
       setOpponentScore(currentScore);
-    });
+    };
+
+    const handleMatchOver = (data: { match: any }) => {
+      setMatchResult(data.match);
+    };
+
+    socket.on("MATCH_START", handleMatchStart);
+    socket.on("OPPONENT_SCORE_UPDATE", handleOpponentScore);
+    socket.on("MATCH_OVER", handleMatchOver);
 
     return () => {
-      socket.disconnect();
+      socket.off("MATCH_START", handleMatchStart);
+      socket.off("OPPONENT_SCORE_UPDATE", handleOpponentScore);
+      socket.off("MATCH_OVER", handleMatchOver);
     };
   }, []);
 
-  // Action: Find Opponent
+  // Action: Join Matchmaking Queue safely
   const findMatch = () => {
     if (!socketRef.current) return;
     setIsSearching(true);
-    socketRef.current.emit('JOIN_QUEUE', { userId, gameCategory });
+
+    if (socketRef.current.connected) {
+      socketRef.current.emit("JOIN_QUEUE", { userId, gameCategory });
+    } else {
+      socketRef.current.once("connect", () => {
+        socketRef.current?.emit("JOIN_QUEUE", { userId, gameCategory });
+      });
+      socketRef.current.connect();
+    }
   };
 
   // Action: Cancel Searching
   const cancelSearch = () => {
     if (!socketRef.current) return;
     setIsSearching(false);
-    socketRef.current.emit('LEAVE_QUEUE', { userId, gameCategory });
+    socketRef.current.emit("LEAVE_QUEUE", { userId, gameCategory });
   };
 
   // Action: Broadcast live score changes during gameplay
-  const sendScoreUpdate = (currentScore: number) => {
-    if (!socketRef.current || !matchData) return;
-    socketRef.current.emit('SCORE_UPDATE', {
-      roomId: matchData.roomId,
+  const sendScoreUpdate = (currentScore: number, roomId: string) => {
+    if (!socketRef.current) return;
+    socketRef.current.emit("SCORE_UPDATE", {
+      roomId,
       userId,
       currentScore,
     });
   };
 
   // Action: Finish game & persist to DB
-  const submitFinalMatch = (scoreA: number, scoreB: number, moveLog: any[], durationMs: number) => {
-    if (!socketRef.current || !matchData) return;
-    socketRef.current.emit('SUBMIT_MATCH', {
-      roomId: matchData.roomId,
-      playerA: matchData.playerA,
-      playerB: matchData.playerB,
-      scoreA,
-      scoreB,
-      durationMs,
-      puzzleSeed: matchData.puzzleSeed,
-      gameCategory: matchData.gameCategory,
-      moveLog,
-    });
+  const submitFinalMatch = (payload: {
+    roomId: string;
+    playerA: string;
+    playerB: string;
+    scoreA: number;
+    scoreB: number;
+    durationMs: number;
+    puzzleSeed: string;
+    gameCategory: string;
+    moveLog: any[];
+  }) => {
+    if (!socketRef.current) return;
+    socketRef.current.emit("SUBMIT_MATCH", payload);
   };
 
   return {
     isSearching,
     matchData,
     opponentScore,
+    matchResult,
     findMatch,
     cancelSearch,
     sendScoreUpdate,

@@ -35,8 +35,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         const storedToken = await tokenStorage.getToken();
         logDevAuthAction('RESTORE_SESSION_CHECK', { hasToken: !!storedToken });
+
         if (storedToken) {
           setToken(storedToken);
+
+          // Fetch user profile using stored token
+          try {
+            const fetchedUser = await authService.getMe();
+            logDevAuthAction('RESTORE_USER_SUCCESS', {
+              userId: fetchedUser.id,
+              username: fetchedUser.username,
+            });
+            setUser(fetchedUser);
+          } catch (fetchError) {
+            console.error('Failed to fetch user with stored token:', fetchError);
+            await tokenStorage.removeToken();
+            setToken(null);
+            setUser(null);
+          }
         }
       } catch (error) {
         console.error('Failed to restore auth token:', error);
@@ -44,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setIsLoading(false);
       }
     }
+
     loadStoredAuth();
   }, []);
 
