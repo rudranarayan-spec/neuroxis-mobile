@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, TouchableOpacity, Animated, Easing } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Swords, CircleUserRound, ShieldAlert, Timer } from 'lucide-react-native';
@@ -17,7 +17,11 @@ export default function MatchmakingScreen() {
   const { user } = useAuth();
   const params = useLocalSearchParams<{ gameId: string; title: string; route: string }>();
 
-  const currentUserId = user?.id || user?._id || `guest_${Math.random().toString(36).substring(7)}`;
+  const currentUserId = useMemo(
+    () => user?.id || user?._id || `guest_${Math.random().toString(36).substring(7)}`,
+    [user?.id, user?._id]
+  );
+
   const { isSearching, matchData, findMatch, cancelSearch } = useMatchmaking(
     currentUserId,
     params.gameId || 'echoPattern'
@@ -27,7 +31,7 @@ export default function MatchmakingScreen() {
   const [matchFound, setMatchFound] = useState(false);
   const [isCancelActive, setIsCancelActive] = useState(false);
   const isMountedRef = useRef(true);
-
+  const hasNavigatedRef = useRef(false);
   const youInitial = user?.username?.charAt(0)?.toUpperCase() || 'Y';
 
   // ── Lifecycle ────────────────────────────────────────────────────────
@@ -50,12 +54,13 @@ export default function MatchmakingScreen() {
 
   // Match found transition
   useEffect(() => {
-    if (!matchData) return;
+    if (!matchData || hasNavigatedRef.current) return;
     setMatchFound(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
 
     const timeout = setTimeout(() => {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current || hasNavigatedRef.current) return;
+      hasNavigatedRef.current = true;
       router.replace({
         pathname: (params.route || '/game/echoPattern') as any,
         params: {

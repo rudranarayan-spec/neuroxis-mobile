@@ -1,3 +1,4 @@
+
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   View,
@@ -5,6 +6,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
+  StyleSheet,
   useWindowDimensions,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
@@ -19,7 +21,16 @@ import { useMatchmaking } from '../hooks/useMatchmaking';
 
 const MAX_BOARD_SIZE = 400;
 const GRID_SIZE = 3;
-const INITIAL_SEQUENCE_LENGTH = 5;
+
+// Round progression: 4 taps → 5 taps → 6 taps, same 3x3 grid throughout.
+const ROUND_LENGTHS = [4, 5, 6];
+const TOTAL_ROUNDS = ROUND_LENGTHS.length;
+const TOTAL_TILES = ROUND_LENGTHS.reduce((a, b) => a + b, 0); // 15
+
+const ROUND_TRANSITION_DELAY_MS = 900;
+const MISTAKE_RECOVERY_DELAY_MS = 900;
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const generateSeededSequence = (seedStr: string, length: number, totalTiles: number): number[] => {
   let hash = 0;
@@ -50,21 +61,28 @@ export const EchoPatternScreen: React.FC = () => {
 
   const isMultiplayer = params.isMultiplayer === 'true';
 
-  const {
-    opponentScore,
-    matchResult,
-    sendScoreUpdate,
-    submitFinalMatch,
-  } = useMatchmaking(user?.id || '', 'echoPattern');
+  const { opponentScore, matchResult, sendScoreUpdate, submitFinalMatch } = useMatchmaking(
+    user?.id || '',
+    'echoPattern'
+  );
 
   // Core Game States
   const [loading, setLoading] = useState(true);
-  const [sessionId, setSessionId] = useState<string | null>(null);
   const [sequence, setSequence] = useState<number[]>([]);
   const [userSequence, setUserSequence] = useState<number[]>([]);
   const [activeTileIndex, setActiveTileIndex] = useState<number | null>(null);
   const [failedTileIndex, setFailedTileIndex] = useState<number | null>(null);
   const [isPlaybackActive, setIsPlaybackActive] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
+
+  // Round progression state
+  const [roundIndex, setRoundIndex] = useState(0);
+  const [roundSessionIds, setRoundSessionIds] = useState<(string | null)[]>(
+    Array(TOTAL_ROUNDS).fill(null)
+  );
+  const [completedCounts, setCompletedCounts] = useState<number[]>([]);
+  const [roundTransitionMessage, setRoundTransitionMessage] = useState<string | null>(null);
+  const [submissionError, setSubmissionError] = useState(false);
 
   // Timers & Modals
   const [timer, setTimer] = useState(0);
@@ -75,22 +93,20 @@ export const EchoPatternScreen: React.FC = () => {
 
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const isMountedRef = useRef(true);
+  const totalXpRef = useRef(0);
+  const pendingRoundSequenceRef = useRef<number[] | null>(null);
   const boardSize = Math.min(windowWidth - 32, MAX_BOARD_SIZE);
+
+  const cumulativeTiles = completedCounts.reduce((a, b) => a + b, 0) + userSequence.length;
 
   // React Query Mutation
   const submitGameMutation = useMutation({
     mutationFn: (data: { sessionId: string; userSequence: number[]; clientTimeElapsed: number }) =>
       gameApi.submitGame(data),
-    onSuccess: (result) => {
-      stopTimer();
-      setGameResult({ xpEarned: result.xpEarned });
-      setShowSuccessModal(true);
-    },
-    onError: () => {
-      startTimer();
-      showGameToast('Submission Failed', 'Could not verify pattern completion.', 'error');
-    },
   });
+
+  const interactionDisabled =
+    loading || isPlaybackActive || submitGameMutation.isPending || isResetting || !!roundTransitionMessage;
 
   // Timers
   const startTimer = useCallback(() => {
@@ -114,63 +130,81 @@ export const EchoPatternScreen: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // ── Round loading ────────────────────────────────────────────────────
+
+  const loadRound = async (idx: number): Promise<number[] | null> => {
+    const length = ROUND_LENGTHS[idx];
+
+    if (isMultiplayer && params.puzzleSeed) {
+      return generateSeededSequence(`${params.puzzleSeed}-r${idx}`, length, GRID_SIZE * GRID_SIZE);
+    }
+
+    const sessionData = await gameApi.startGame({
+      gameId: 'echoPattern',
+      sequenceLength: length,
+      gridSize: GRID_SIZE * GRID_SIZE,
+    });
+    if (!isMountedRef.current) return null;
+
+    setRoundSessionIds((prev) => {
+      const next = [...prev];
+      next[idx] = sessionData.sessionId;
+      return next;
+    });
+
+    return sessionData.sequence || [];
+  };
+
   const initGame = async () => {
     try {
       setLoading(true);
       setShowSuccessModal(false);
       setTimer(0);
+      setRoundIndex(0);
+      setCompletedCounts([]);
+      setRoundSessionIds(Array(TOTAL_ROUNDS).fill(null));
+      setSubmissionError(false);
       setUserSequence([]);
       setActiveTileIndex(null);
       setFailedTileIndex(null);
+      totalXpRef.current = 0;
 
-      let targetSeq: number[] = [];
-
-      if (isMultiplayer && params.puzzleSeed) {
-        // Generate same sequence for both players using seed
-        targetSeq = generateSeededSequence(params.puzzleSeed, INITIAL_SEQUENCE_LENGTH, GRID_SIZE * GRID_SIZE);
-      } else {
-        // Fallback Solo Mode API fetch
-        const sessionData = await gameApi.startGame({
-          gameId: 'echoPattern',
-          sequenceLength: INITIAL_SEQUENCE_LENGTH,
-          gridSize: GRID_SIZE * GRID_SIZE,
-        });
-        setSessionId(sessionData.sessionId);
-        targetSeq = sessionData.sequence || [];
+      const targetSeq = await loadRound(0);
+      if (!isMountedRef.current || !targetSeq) {
+        setLoading(false);
+        return;
       }
-
-      if (!isMountedRef.current) return;
 
       setSequence(targetSeq);
       setLoading(false);
 
-      if (targetSeq.length > 0) {
-        playSequencePreview(targetSeq);
-      }
+      if (targetSeq.length > 0) playSequencePreview(targetSeq);
     } catch (error: any) {
       setLoading(false);
     }
   };
+
+  // ── Sequence Playback (Preview Phase) ────────────────────────────────
 
   const playSequencePreview = async (targetSequence: number[]) => {
     setIsPlaybackActive(true);
     stopTimer();
     setUserSequence([]);
 
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    await wait(500);
 
     for (let i = 0; i < targetSequence.length; i++) {
       if (!isMountedRef.current) return;
 
       const tileIdx = targetSequence[i];
       setActiveTileIndex(tileIdx);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
 
-      await new Promise((resolve) => setTimeout(resolve, 450));
+      await wait(450);
       if (!isMountedRef.current) return;
       setActiveTileIndex(null);
 
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      await wait(200);
     }
 
     if (isMountedRef.current) {
@@ -179,12 +213,13 @@ export const EchoPatternScreen: React.FC = () => {
     }
   };
 
+  // ── Tile Tap Interaction ──────────────────────────────────────────────
+
   const handleTilePress = (tileIndex: number) => {
-    if (isPlaybackActive || loading) return;
+    if (interactionDisabled) return;
 
     setActiveTileIndex(tileIndex);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
-
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setTimeout(() => {
       if (isMountedRef.current) setActiveTileIndex(null);
     }, 180);
@@ -193,53 +228,119 @@ export const EchoPatternScreen: React.FC = () => {
     const expectedTile = sequence[currentStep];
 
     if (tileIndex !== expectedTile) {
+      setIsResetting(true);
       setFailedTileIndex(tileIndex);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => { });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
 
       setTimeout(() => {
         if (!isMountedRef.current) return;
         setFailedTileIndex(null);
+        setIsResetting(false);
         playSequencePreview(sequence);
-      }, 900);
+      }, MISTAKE_RECOVERY_DELAY_MS);
       return;
     }
 
     const nextUserSequence = [...userSequence, tileIndex];
     setUserSequence(nextUserSequence);
 
-    // REAL-TIME OPPONENT SYNC: Send live sequence step progress
+    // Broadcast CUMULATIVE progress across all rounds, not just this round.
     if (isMultiplayer && params.roomId) {
-      sendScoreUpdate(nextUserSequence.length, params.roomId);
+      const completedSoFar = completedCounts.reduce((a, b) => a + b, 0);
+      sendScoreUpdate(completedSoFar + nextUserSequence.length, params.roomId);
     }
 
-    // GAME COMPLETE
     if (nextUserSequence.length === sequence.length) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       stopTimer();
+      handleRoundComplete(nextUserSequence);
+    }
+  };
 
+  // ── Round completion / progression ──────────────────────────────────
+
+  const submitRound = async (finalRoundSequence: number[]): Promise<boolean> => {
+    if (isMultiplayer) return true; // multiplayer scoring goes through sendScoreUpdate/submitFinalMatch only
+
+    const sessionId = roundSessionIds[roundIndex];
+    if (!sessionId) return true; // nothing to submit against — shouldn't normally happen
+
+    try {
+      const result = await submitGameMutation.mutateAsync({
+        sessionId,
+        userSequence: finalRoundSequence,
+        clientTimeElapsed: timer,
+      });
+      if (!isMountedRef.current) return false;
+      totalXpRef.current += result?.xpEarned || 0;
+      setSubmissionError(false);
+      return true;
+    } catch (err) {
+      if (!isMountedRef.current) return false;
+      setSubmissionError(true);
+      showGameToast('Submission Failed', 'Could not save this round. Tap retry to continue.', 'error');
+      return false;
+    }
+  };
+
+  const handleRoundComplete = async (finalRoundSequence: number[]) => {
+    pendingRoundSequenceRef.current = finalRoundSequence;
+    const ok = await submitRound(finalRoundSequence);
+    if (!ok) return; // halted — RETRY SAVE control takes over
+    await proceedAfterRound(finalRoundSequence);
+  };
+
+  const handleRetrySubmission = async () => {
+    const seq = pendingRoundSequenceRef.current;
+    if (!seq) return;
+    const ok = await submitRound(seq);
+    if (!ok) return;
+    await proceedAfterRound(seq);
+  };
+
+  const proceedAfterRound = async (finalRoundSequence: number[]) => {
+    const isLastRound = roundIndex === TOTAL_ROUNDS - 1;
+    const newCompletedCounts = [...completedCounts, finalRoundSequence.length];
+    const cumulativeAfterThisRound = newCompletedCounts.reduce((a, b) => a + b, 0);
+    setCompletedCounts(newCompletedCounts);
+
+    if (isLastRound) {
       if (isMultiplayer && params.roomId) {
-        // Emit Socket Match Submission for 1v1
         const isPlayerA = params.playerA === user?.id;
         submitFinalMatch({
           roomId: params.roomId,
           playerA: params.playerA || '',
           playerB: params.playerB || '',
-          scoreA: isPlayerA ? nextUserSequence.length : opponentScore,
-          scoreB: isPlayerA ? opponentScore : nextUserSequence.length,
+          scoreA: isPlayerA ? cumulativeAfterThisRound : opponentScore,
+          scoreB: isPlayerA ? opponentScore : cumulativeAfterThisRound,
           durationMs: timer * 1000,
           puzzleSeed: params.puzzleSeed || '',
           gameCategory: 'echoPattern',
-          moveLog: nextUserSequence,
+          moveLog: finalRoundSequence,
         });
-        setShowSuccessModal(true);
-      } else if (sessionId) {
-        // Solo REST fallback
-        submitGameMutation.mutate({
-          sessionId,
-          userSequence: nextUserSequence,
-          clientTimeElapsed: timer,
-        });
+      } else {
+        setGameResult({ xpEarned: totalXpRef.current });
       }
+      setShowSuccessModal(true);
+      return;
+    }
+
+    setRoundTransitionMessage(`ROUND ${roundIndex + 1} COMPLETE`);
+    await wait(ROUND_TRANSITION_DELAY_MS);
+    if (!isMountedRef.current) return;
+    setRoundTransitionMessage(null);
+
+    const nextIdx = roundIndex + 1;
+    setRoundIndex(nextIdx);
+    setUserSequence([]);
+
+    try {
+      const nextSeq = await loadRound(nextIdx);
+      if (!isMountedRef.current || !nextSeq) return;
+      setSequence(nextSeq);
+      playSequencePreview(nextSeq);
+    } catch (err) {
+      showGameToast('Load Failed', 'Could not load the next round. Try exiting and rejoining.', 'error');
     }
   };
 
@@ -315,15 +416,51 @@ export const EchoPatternScreen: React.FC = () => {
           </View>
         </View>
 
+        {/* ROUND PROGRESS CHIPS */}
+        <View className="mt-2.5 flex-row items-center justify-center" style={{ gap: 8 }}>
+          {ROUND_LENGTHS.map((len, i) => {
+            const isDone = i < roundIndex || i < completedCounts.length;
+            const isCurrent = i === roundIndex && !isDone;
+            return (
+              <View
+                key={i}
+                style={{
+                  paddingHorizontal: 10,
+                  paddingVertical: 4,
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  backgroundColor: isDone
+                    ? 'rgba(181,242,61,0.15)'
+                    : isCurrent
+                    ? 'rgba(181,242,61,0.06)'
+                    : 'rgba(255,255,255,0.03)',
+                  borderColor: isDone
+                    ? '#B5F23D'
+                    : isCurrent
+                    ? 'rgba(181,242,61,0.5)'
+                    : 'rgba(255,255,255,0.08)',
+                }}
+              >
+                <Text
+                  className="font-orbitron-black text-[10px]"
+                  style={{ color: isDone || isCurrent ? '#B5F23D' : 'rgba(255,255,255,0.35)' }}
+                >
+                  {isDone ? `✓ R${i + 1}` : `R${i + 1} · ${len}`}
+                </Text>
+              </View>
+            );
+          })}
+        </View>
+
         {/* 1V1 LIVE OPPONENT DISPLAY */}
         {isMultiplayer && (
           <View className="mt-2 flex-row items-center justify-between rounded-xl bg-white/5 px-4 py-2 border border-white/10">
             <Text className="font-rajdhani-bold text-xs text-white/70">
-              YOU: {userSequence.length}/{sequence.length}
+              YOU: {cumulativeTiles}/{TOTAL_TILES}
             </Text>
             <Text className="font-orbitron-bold text-xs text-lime-400">VS</Text>
             <Text className="font-rajdhani-bold text-xs text-red-400">
-              OPPONENT: {opponentScore}/{sequence.length}
+              OPPONENT: {opponentScore}/{TOTAL_TILES}
             </Text>
           </View>
         )}
@@ -332,7 +469,7 @@ export const EchoPatternScreen: React.FC = () => {
       {/* MATRIX GRID */}
       <View className="my-auto items-center justify-center">
         <View
-          style={{ width: boardSize, height: boardSize }}
+          style={{ width: boardSize, height: boardSize, position: 'relative' }}
           className="flex-row flex-wrap items-center justify-between rounded-3xl border border-cardBorder bg-[#181818] p-4 shadow-2xl"
         >
           {Array.from({ length: GRID_SIZE * GRID_SIZE }).map((_, index) => {
@@ -377,7 +514,7 @@ export const EchoPatternScreen: React.FC = () => {
               <TouchableOpacity
                 key={`tile-${index}`}
                 activeOpacity={0.85}
-                disabled={isPlaybackActive || submitGameMutation.isPending}
+                disabled={interactionDisabled}
                 onPress={() => handleTilePress(index)}
                 style={tileStyle}
                 className="w-[30%] aspect-square items-center justify-center rounded-2xl border-2"
@@ -386,6 +523,22 @@ export const EchoPatternScreen: React.FC = () => {
               </TouchableOpacity>
             );
           })}
+
+          {/* ROUND TRANSITION OVERLAY */}
+          {roundTransitionMessage && (
+            <View
+              pointerEvents="none"
+              style={StyleSheet.absoluteFillObject}
+              className="items-center justify-center rounded-3xl bg-black/75"
+            >
+              <Text className="font-orbitron-black text-lg tracking-wider text-accentGreen">
+                {roundTransitionMessage}
+              </Text>
+              <Text className="mt-1 font-rajdhani-bold text-[11px] text-white/50">
+                Next round starting…
+              </Text>
+            </View>
+          )}
         </View>
 
         <View className="mt-4 h-10 items-center justify-center">
@@ -396,6 +549,10 @@ export const EchoPatternScreen: React.FC = () => {
                 VERIFYING PATTERN RECALL...
               </Text>
             </View>
+          ) : submissionError ? (
+            <Text className="max-w-[280px] text-center font-rajdhani text-xs text-red-400 leading-4">
+              Round complete, but saving it failed. Tap "RETRY SAVE" below.
+            </Text>
           ) : (
             <Text className="max-w-[280px] text-center font-rajdhani text-xs text-text-main/60 leading-4">
               {isPlaybackActive
@@ -409,19 +566,32 @@ export const EchoPatternScreen: React.FC = () => {
       {/* BOTTOM CONTROL TOOLBAR */}
       <View
         className="mb-6 items-center"
-        style={{ opacity: isPlaybackActive || submitGameMutation.isPending ? 0.4 : 1 }}
+        style={{ opacity: interactionDisabled && !submissionError ? 0.4 : 1 }}
       >
-        <TouchableOpacity
-          onPress={() => playSequencePreview(sequence)}
-          disabled={isPlaybackActive || submitGameMutation.isPending}
-          activeOpacity={0.8}
-          className="h-12 flex-row items-center justify-center gap-2 rounded-xl border border-cardBorder bg-card px-8"
-        >
-          <Text className="text-sm">🔄</Text>
-          <Text className="font-orbitron-bold text-xs tracking-wider text-text-main">
-            REPLAY PATTERN
-          </Text>
-        </TouchableOpacity>
+        {submissionError ? (
+          <TouchableOpacity
+            onPress={handleRetrySubmission}
+            activeOpacity={0.85}
+            className="h-12 flex-row items-center justify-center gap-2 rounded-xl border border-red-500/40 bg-red-500/10 px-8"
+          >
+            <Text className="text-sm">Retry</Text>
+            <Text className="font-orbitron-bold text-xs tracking-wider text-red-400">
+              RETRY SAVE
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            onPress={() => playSequencePreview(sequence)}
+            disabled={interactionDisabled}
+            activeOpacity={0.8}
+            className="h-12 flex-row items-center justify-center gap-2 rounded-xl border border-cardBorder bg-card px-8"
+          >
+            {/* <Text className="text-sm"><ReplayIcon /></Text> */}
+            <Text className="font-orbitron-bold text-xs tracking-wider text-text-main">
+              REPLAY PATTERN
+            </Text>
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* MODALS */}
@@ -430,9 +600,10 @@ export const EchoPatternScreen: React.FC = () => {
         onCancel={() => setShowExitModal(false)}
         onConfirmExit={async () => {
           setShowExitModal(false);
-          if (sessionId) {
+          const currentSessionId = roundSessionIds[roundIndex];
+          if (currentSessionId) {
             try {
-              await gameApi.abandonGame(sessionId, timer);
+              await gameApi.abandonGame(currentSessionId, timer);
             } catch (err) {
               console.error(err);
             }
