@@ -21,9 +21,14 @@ export const authService = {
     return response.data;
   },
 
-  getMe: async (): Promise<User> => {
-    const response = await apiClient.get<GetMeResponse>("/users/me");
-    const userData = response.data.data.user;
+  getMe: async (customToken?: string): Promise<User> => {
+    const headers = customToken
+      ? { Authorization: `Bearer ${customToken}` }
+      : {};
+    const response = await apiClient.get("/users/me", { headers });
+
+    const userData =
+      response.data?.data?.user || response.data?.user || response.data;
 
     return {
       ...userData,

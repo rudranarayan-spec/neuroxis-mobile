@@ -39,7 +39,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (storedToken) {
           setToken(storedToken);
 
-          // Fetch user profile using stored token
           try {
             const fetchedUser = await authService.getMe();
             logDevAuthAction('RESTORE_USER_SUCCESS', {
@@ -47,11 +46,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               username: fetchedUser.username,
             });
             setUser(fetchedUser);
-          } catch (fetchError) {
+          } catch (fetchError: any) {
             console.error('Failed to fetch user with stored token:', fetchError);
-            await tokenStorage.removeToken();
-            setToken(null);
-            setUser(null);
+
+            // ONLY remove token if the server specifically rejects it with 401 Unauthorized
+            if (fetchError?.response?.status === 401) {
+              logDevAuthAction('RESTORE_USER_FAILED', '401 Unauthorized -> Clearing Token');
+              await tokenStorage.removeToken();
+              setToken(null);
+              setUser(null);
+            } else {
+              // Keep token stored so user isn't logged out on temporary network blips
+              logDevAuthAction('RESTORE_USER_WARNING', 'Network issue or server unavailable');
+            }
           }
         }
       } catch (error) {
