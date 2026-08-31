@@ -65,6 +65,17 @@ const TOP_GAMES: GameItem[] = [
     isAvailable: true,
   },
   {
+    id: 'wordGame',
+    title: 'Wordgame',
+    description: 'Crack hidden code words in a fast-paced head-to-head battle.',
+    category: 'Word & Logic',
+    rating: 4.8,
+    xpReward: '+60 XP',
+    activePlayers: '1.2k',
+    route: '/game/wordGame',
+    isAvailable: true,
+  },
+  {
     id: 'sequence_breaker',
     title: 'Sequence Breaker',
     description: 'Identify anomalous vectors in real-time neural data streams.',
@@ -74,7 +85,7 @@ const TOP_GAMES: GameItem[] = [
     activePlayers: 'Locked',
     route: '/game/sequence-breaker',
     isAvailable: false,
-  },
+  }
 ];
 
 // Per-game visual identity — icon + tint color, keyed by id.
@@ -169,9 +180,8 @@ export const GameModulesSection: React.FC<GameModulesSectionProps> = ({ onSelect
             >
               <TabIcon size={15} color={isActive ? '#000000' : '#8E8E93'} />
               <Text
-                className={`font-orbitron-bold text-[11px] tracking-wider ${
-                  isActive ? 'text-black' : 'text-text-muted'
-                }`}
+                className={`font-orbitron-bold text-[11px] tracking-wider ${isActive ? 'text-black' : 'text-text-muted'
+                  }`}
               >
                 {tab.label}
               </Text>
@@ -246,9 +256,8 @@ const GameCard: React.FC<GameCardProps> = ({ game, mode, onPress }) => {
         disabled={!isPlayable}
         accessibilityRole="button"
         accessibilityLabel={`${game.title}${isPlayable ? '' : ', coming soon'}`}
-        className={`relative overflow-hidden rounded-2xl border bg-[#0D1117] p-4 ${
-          isPlayable ? 'border-white/10' : 'border-white/5'
-        }`}
+        className={`relative overflow-hidden rounded-2xl border bg-[#0D1117] p-4 ${isPlayable ? 'border-white/10' : 'border-white/5'
+          }`}
         style={{ opacity: isPlayable ? 1 : 0.6 }}
       >
         {/* TOP METADATA ROW */}
@@ -305,17 +314,15 @@ const GameCard: React.FC<GameCardProps> = ({ game, mode, onPress }) => {
           <Text className="font-orbitron-bold text-xs text-lime-400">{game.xpReward}</Text>
 
           <View
-            className={`flex-row items-center gap-1.5 rounded-xl border px-4 py-2 ${
-              !isPlayable ? 'border-white/10 bg-white/5' : 'border-lime-400/30 bg-lime-400/10'
-            }`}
+            className={`flex-row items-center gap-1.5 rounded-xl border px-4 py-2 ${!isPlayable ? 'border-white/10 bg-white/5' : 'border-lime-400/30 bg-lime-400/10'
+              }`}
           >
             <CtaIcon size={12} color={!isPlayable ? '#8E8E93' : '#B5F23D'} fill={
               isPlayable && mode === 'SOLO' ? '#B5F23D' : 'none'
             } />
             <Text
-              className={`font-orbitron-bold text-[11px] tracking-wider ${
-                !isPlayable ? 'text-text-muted' : 'text-lime-400'
-              }`}
+              className={`font-orbitron-bold text-[11px] tracking-wider ${!isPlayable ? 'text-text-muted' : 'text-lime-400'
+                }`}
             >
               {ctaLabel}
             </Text>
