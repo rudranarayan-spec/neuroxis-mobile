@@ -103,19 +103,19 @@ export default function ProfileScreen() {
           >
             <Text
               style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
-              className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
+              className="text-xl sm:text-3xl tracking-tighter text-right uppercase leading-none"
             >
               THINK FAST
             </Text>
             <Text
               style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.textMain }}
-              className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
+              className="text-xl sm:text-3xl tracking-tighter text-right uppercase leading-none"
             >
               WIN LOUDER
             </Text>
             <Text
               style={{ fontFamily: FONTS.orbitronBlack, color: COLORS.primary }}
-              className="text-xl sm:text-2xl tracking-tighter text-right uppercase leading-none"
+              className="text-xl sm:text-3xl tracking-tighter text-right uppercase leading-none"
             >
               PLAY IT SMART
             </Text>

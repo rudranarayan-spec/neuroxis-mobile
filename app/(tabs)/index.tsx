@@ -102,11 +102,15 @@ export default function HomeScreen() {
           </View>
 
           {/* Right Section: User Avatar */}
-          <View className="h-11 w-11 items-center justify-center rounded-xl border border-cardBorder bg-card">
+          <TouchableOpacity
+            className="h-11 w-11 items-center justify-center rounded-xl border border-cardBorder bg-card"
+            onPress={() => router.push('/profile')}
+            activeOpacity={0.7}
+          >
             <Text className="font-orbitron text-sm font-bold text-accentGreen">
               {(user?.username || metrics?.username || 'P1').substring(0, 2).toUpperCase()}
             </Text>
-          </View>
+          </TouchableOpacity>
         </View>
 
         {/* 3. CONSOLIDATED STATS GRID (ONLY 4 BOXES) */}
