@@ -198,7 +198,7 @@ export const EchoPatternScreen: React.FC = () => {
 
       const tileIdx = targetSequence[i];
       setActiveTileIndex(tileIdx);
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {});
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => { });
 
       await wait(450);
       if (!isMountedRef.current) return;
@@ -219,7 +219,7 @@ export const EchoPatternScreen: React.FC = () => {
     if (interactionDisabled) return;
 
     setActiveTileIndex(tileIndex);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
     setTimeout(() => {
       if (isMountedRef.current) setActiveTileIndex(null);
     }, 180);
@@ -230,7 +230,7 @@ export const EchoPatternScreen: React.FC = () => {
     if (tileIndex !== expectedTile) {
       setIsResetting(true);
       setFailedTileIndex(tileIndex);
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => { });
 
       setTimeout(() => {
         if (!isMountedRef.current) return;
@@ -251,7 +251,7 @@ export const EchoPatternScreen: React.FC = () => {
     }
 
     if (nextUserSequence.length === sequence.length) {
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
       stopTimer();
       handleRoundComplete(nextUserSequence);
     }
@@ -432,13 +432,13 @@ export const EchoPatternScreen: React.FC = () => {
                   backgroundColor: isDone
                     ? 'rgba(181,242,61,0.15)'
                     : isCurrent
-                    ? 'rgba(181,242,61,0.06)'
-                    : 'rgba(255,255,255,0.03)',
+                      ? 'rgba(181,242,61,0.06)'
+                      : 'rgba(255,255,255,0.03)',
                   borderColor: isDone
                     ? '#B5F23D'
                     : isCurrent
-                    ? 'rgba(181,242,61,0.5)'
-                    : 'rgba(255,255,255,0.08)',
+                      ? 'rgba(181,242,61,0.5)'
+                      : 'rgba(255,255,255,0.08)',
                 }}
               >
                 <Text
