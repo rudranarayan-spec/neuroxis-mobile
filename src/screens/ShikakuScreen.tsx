@@ -552,7 +552,7 @@ export const ShikakuScreen: React.FC = () => {
               console.error(err);
             }
           }
-          router.back();
+          router.replace('/(tabs)');
         }}
       />
 
@@ -573,16 +573,10 @@ export const ShikakuScreen: React.FC = () => {
         onPlayAgain={initGame}
         onExit={() => {
           setShowSuccessModal(false);
-          router.back();
+          router.replace('/(tabs)');
         }}
       />
     </ScreenContainer>
   );
 };
 
-
-const SHIKAKU_RULES = [
-  'Divide the grid into rectangular and square regions.',
-  'Each region must contain exactly one number.',
-  'The area of each region (cells count) must equal the number inside it.',
-];
