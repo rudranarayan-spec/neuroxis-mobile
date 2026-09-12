@@ -128,4 +128,66 @@ export const GAME_CONFIGS: Record<string, GameConfig> = {
     controlsGuide:
       "Tap the individual matrix tiles in sequence. Use the replay button if you need to review the initial preview.",
   },
+  wordGame: {
+    id: "wordGame",
+    title: "CYPHER WORD",
+    subtitle: "LEXICAL DECRYPTION",
+    icon: "🔤",
+    description:
+      "Deduce the secret encrypted target word within limited attempts using letter status feedback.",
+    tagline: "Cypher cracked and target word identified.",
+    baseXp: 60,
+    speedReward: {
+      targetTimeFormatted: "Under 1:30 mins",
+      bonusXp: 25,
+    },
+    metrics: [
+      { label: "BASE REWARD", value: "+60 XP" },
+      { label: "GRID CONFIG", value: "5 LETTER WORD" },
+      { label: "MAX TRIES", value: "6 ATTEMPTS" },
+      { label: "DIFFICULTY", value: "NOVICE" },
+    ],
+    tacticalIntel: [
+      "Start with common vowel-heavy opener words (e.g., ARISE or AUDIO) to rapidly narrow down key letters.",
+      "Green tiles confirm exact position, yellow tiles indicate the letter exists elsewhere, and gray tiles rule out letters.",
+    ],
+    rules: [
+      "Guess the hidden 5-letter word in 6 attempts or fewer.",
+      "Each guess must be a valid 5-letter word.",
+      "Tile colors change after each submit to show how close your guess was to the target word.",
+    ],
+    controlsGuide:
+      "Type your word using the virtual keyboard, then tap SUBMIT. Use DELETE to edit your entry.",
+  },
+  "sequence-breaker": {
+    id: "sequence-breaker",
+    title: "SEQUENCE BREAKER",
+    subtitle: "LOGIC SEQUENCING",
+    icon: "🧩",
+    description:
+      "Isolate individual power nodes into non-overlapping geometric grid zones to prevent grid overload.",
+    tagline: "Grid zones isolated and power flow stabilized.",
+    baseXp: 50,
+    speedReward: {
+      targetTimeFormatted: "Under 2:00 mins",
+      bonusXp: 20,
+    },
+    metrics: [
+      { label: "BASE REWARD", value: "+50 XP" },
+      { label: "GRID CONFIG", value: "5 x 5 SECTOR" },
+      { label: "TARGET TIME", value: "< 2:00 MIN" },
+      { label: "DIFFICULTY", value: "INTERMEDIATE" },
+    ],
+    tacticalIntel: [
+      "Isolate high-value nodes along grid edges first, as their geometric expansion paths are restricted.",
+      "Check that your total calculated node capacities sum up to match the entire 25-cell grid field.",
+    ],
+    rules: [
+      "Partition the entire spatial grid into non-overlapping rectangular power zones.",
+      "Each isolated zone must enclose exactly one numbered power node.",
+      "The exact cell area of the rectangle must match the node's numerical value.",
+    ],
+    controlsGuide:
+      "Drag from one cell to another across the grid to draw a rectangular zone. Tap an existing region to remove it.",
+  },
 };

@@ -1,3 +1,4 @@
+export type GameId = 'shikaku' | 'sequence-breaker' | 'sudoku' | 'echo-pattern' | 'wordGame';
 export type Difficulty = 'EASY' | 'MEDIUM' | 'HARD';
 
 export interface ShikakuRect {
@@ -9,10 +10,11 @@ export interface ShikakuRect {
 
 export interface Puzzle {
   _id: string;
-  gameId: string;
+  gameId: GameId | string;
   difficulty: Difficulty;
   gridSize: number;
   board: number[][];
+  solution?: number[][];
 }
 
 export interface GetPuzzleResponse {
@@ -22,17 +24,17 @@ export interface GetPuzzleResponse {
 }
 
 export interface StartGamePayload {
-  gameId: string;
-  puzzleId?: string;          
-  sequenceLength?: number;    
-  gridSize?: number;           
+  gameId: GameId | string;
+  puzzleId?: string;
+  sequenceLength?: number;
+  gridSize?: number;
 }
 
 export interface StartGameResponse {
   success: boolean;
   sessionId: string;
   startTime: string;
-  sequence?: number[];          // Returned for Echo Pattern sessions
+  sequence?: number[]; // Returned for Echo Pattern sessions
 }
 
 export interface SubmitGameResponse {
@@ -43,12 +45,12 @@ export interface SubmitGameResponse {
   currentStreak?: number;
 }
 
-// Updated Payload supporting Sudoku (userBoard), Shikaku (rects), and Echo Pattern (userSequence)
+// Updated Payload supporting Sudoku (userBoard), Shikaku/Circuit Breaker (rects), and Echo Pattern (userSequence)
 export interface SubmitGamePayload {
   sessionId: string;
   userBoard?: number[][];
   rects?: ShikakuRect[];
-  userSequence?: number[];     // Added for Echo Pattern tap validation
+  userSequence?: number[];
   clientTimeElapsed: number;
 }
 
@@ -69,7 +71,7 @@ export interface AbandonGameResponse {
   session: {
     _id: string;
     userId: string;
-    gameId: string;
+    gameId: GameId | string;
     puzzleId?: string;
     status: 'ABANDONED';
     startTime: string;

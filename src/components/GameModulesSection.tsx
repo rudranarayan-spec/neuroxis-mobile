@@ -13,6 +13,7 @@ import {
   Waves,
   Binary,
   type LucideProps,
+  LetterText,
 } from 'lucide-react-native';
 
 export interface GameItem {
@@ -76,7 +77,7 @@ const TOP_GAMES: GameItem[] = [
     isAvailable: true,
   },
   {
-    id: 'sequence_breaker',
+    id: 'sequence-breaker',
     title: 'Sequence Breaker',
     description: 'Identify anomalous vectors in real-time neural data streams.',
     category: 'Pattern Analysis',
@@ -93,7 +94,8 @@ const GAME_VISUALS: Record<string, { icon: IconComponent; tint: string }> = {
   sudoku: { icon: Grid3x3, tint: '#38BDF8' },
   shikaku: { icon: Shapes, tint: '#A78BFA' },
   echoPattern: { icon: Waves, tint: '#2DD4BF' },
-  sequence_breaker: { icon: Binary, tint: '#FB923C' },
+  wordGame: { icon: LetterText, tint: '#FACC15' },
+  "sequence-breaker": { icon: Binary, tint: '#FB923C' },
 };
 const DEFAULT_TINT = '#B5F23D';
 
