@@ -10,8 +10,9 @@ import {
   PanResponder,
   GestureResponderEvent,
   useWindowDimensions,
+  BackHandler,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useFocusEffect, useNavigation, useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { gameApi } from '../services/gameApi';
@@ -75,7 +76,7 @@ const normalizeRect = (a: Cell, b: Cell): ShikakuRect => ({
 export const ShikakuScreen: React.FC = () => {
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
-
+  const navigation = useNavigation();
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
@@ -109,6 +110,24 @@ export const ShikakuScreen: React.FC = () => {
     return () => stopTimer();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        setShowExitModal(true);
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [])
+  );
+
+
 
   const startTimer = () => {
     stopTimer();
@@ -233,15 +252,10 @@ export const ShikakuScreen: React.FC = () => {
     applyRectChange([]);
   };
 
-  // ── Gesture handling ─────────────────────────────────────────────────
+  // ── Gesture handling ──────────────────────────────────────────────────
 
   const getCellFromEvent = useCallback(
     (evt: GestureResponderEvent): Cell => {
-      // locationX/locationY are reported by RN relative to whichever view
-      // owns the current gesture (our grid container, since every cell and
-      // rect overlay below has pointerEvents="none"). This avoids mixing
-      // window-relative pageX/pageY with a separately-measured offset,
-      // which is what caused the vertical drift into the row below.
       const { locationX, locationY } = evt.nativeEvent;
       const col = clamp(Math.floor(locationX / cellSize), 0, gridSize - 1);
       const row = clamp(Math.floor(locationY / cellSize), 0, gridSize - 1);

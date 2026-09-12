@@ -7,8 +7,9 @@ import {
     ActivityIndicator,
     Alert,
     useWindowDimensions,
+    BackHandler,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import Animated, {
@@ -168,6 +169,7 @@ export default function WordGameScreen() {
     const router = useRouter();
     const { width: windowWidth } = useWindowDimensions();
     const { user } = useAuth();
+    const navigation = useNavigation();
 
     const params = useLocalSearchParams<{
         roomId?: string;
@@ -206,6 +208,22 @@ export default function WordGameScreen() {
     const secretWordRef = useRef<string | null>(null);
 
     // ── Lifecycle ────────────────────────────────────────────────────────
+
+    useFocusEffect(
+        useCallback(() => {
+            const onBackPress = () => {
+                setShowExitModal(true);
+                return true; 
+            };
+
+            const subscription = BackHandler.addEventListener(
+                'hardwareBackPress',
+                onBackPress
+            );
+
+            return () => subscription.remove();
+        }, [])
+    );
 
     useEffect(() => {
         isMountedRef.current = true;
@@ -282,7 +300,7 @@ export default function WordGameScreen() {
         if (gameOverInfo || isSubmitting) return;
 
         if (key === 'DELETE') {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
             setCurrentGuess((prev) => prev.slice(0, -1));
             return;
         }
@@ -290,7 +308,7 @@ export default function WordGameScreen() {
         if (key === 'ENTER') {
             if (currentGuess.length !== wordLength) {
                 triggerShake();
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => { });
                 return;
             }
             submitGuess(currentGuess);
@@ -298,7 +316,7 @@ export default function WordGameScreen() {
         }
 
         if (currentGuess.length < wordLength) {
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => { });
             setCurrentGuess((prev) => prev + key);
         }
     };
@@ -316,7 +334,7 @@ export default function WordGameScreen() {
     const handleMultiplayerGuess = (word: string) => {
         if (!WORD_SET.has(word)) {
             triggerShake();
-            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => { });
             return; // not a recognized word — no attempt consumed
         }
 
@@ -339,7 +357,7 @@ export default function WordGameScreen() {
             stopTimer();
             Haptics.notificationAsync(
                 won ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error
-            ).catch(() => {});
+            ).catch(() => { });
 
             if (params.roomId) {
                 const isPlayerA = params.playerA === user?.id;
@@ -379,7 +397,7 @@ export default function WordGameScreen() {
 
             if (data?.invalidWord) {
                 triggerShake();
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => { });
                 return; // real word check failed server-side — no attempt consumed
             }
 
@@ -399,18 +417,18 @@ export default function WordGameScreen() {
 
             if (data?.success) {
                 stopTimer();
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => { });
                 setGameOverInfo({ won: true, xpEarned: data.xpEarned });
             } else if (nextGuesses.length >= MAX_ATTEMPTS) {
                 stopTimer();
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => { });
                 setGameOverInfo({ won: false, answer: data?.correctWord });
             }
         } catch (error: any) {
             if (!isMountedRef.current) return;
             if (error?.response?.data?.invalidWord) {
                 triggerShake();
-                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {});
+                Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => { });
                 return;
             }
             Alert.alert('Connection Error', 'Could not submit your guess. Please try again.');
@@ -635,8 +653,8 @@ export default function WordGameScreen() {
                                 const colors = isSpecial
                                     ? { bg: '#B5F23D', border: '#B5F23D', text: '#04060A' }
                                     : state
-                                    ? STATE_COLORS[state]
-                                    : STATE_COLORS.unknown;
+                                        ? STATE_COLORS[state]
+                                        : STATE_COLORS.unknown;
 
                                 return (
                                     <TouchableOpacity

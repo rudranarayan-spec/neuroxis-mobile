@@ -8,6 +8,7 @@ import {
   StatusBar,
   StyleSheet,
   useWindowDimensions,
+  BackHandler,
 } from 'react-native';
 import { useMutation } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
@@ -15,7 +16,7 @@ import { ScreenContainer } from '../components/ScreenContainer';
 import { gameApi } from '../services/gameApi';
 import { showGameToast } from '../utils/toast';
 import { ExitModal, GuideModal, SuccessModal } from '../components/GameModals';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useNavigation, useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import { useMatchmaking } from '../hooks/useMatchmaking';
 
@@ -50,7 +51,7 @@ export const EchoPatternScreen: React.FC = () => {
   const router = useRouter();
   const { width: windowWidth } = useWindowDimensions();
   const { user } = useAuth();
-
+  const navigation = useNavigation();
   const params = useLocalSearchParams<{
     roomId?: string;
     puzzleSeed?: string;
@@ -127,8 +128,24 @@ export const EchoPatternScreen: React.FC = () => {
       isMountedRef.current = false;
       stopTimer();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        setShowExitModal(true);
+        return true;
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [])
+  );
+
 
   // ── Round loading ────────────────────────────────────────────────────
 

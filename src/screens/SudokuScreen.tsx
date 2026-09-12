@@ -1,12 +1,13 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   ActivityIndicator,
   StatusBar,
+  BackHandler,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect, useNavigation } from 'expo-router';
 import { ScreenContainer } from '../components/ScreenContainer';
 import { gameApi } from '../services/gameApi';
 import { CellPosition, HistoryStep, Puzzle } from '../types/games.types';
@@ -15,7 +16,7 @@ import { ExitModal, GuideModal, SuccessModal } from '../components/GameModals';
 
 export const SudokuScreen: React.FC = () => {
   const router = useRouter();
-
+  const navigation = useNavigation();
   const [loading, setLoading] = useState<boolean>(true);
   const [submitting, setSubmitting] = useState<boolean>(false);
   const [puzzle, setPuzzle] = useState<Puzzle | null>(null);
@@ -38,6 +39,24 @@ export const SudokuScreen: React.FC = () => {
     initGame();
     return () => stopTimer();
   }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      const onBackPress = () => {
+        // Show the ExitModal instead of navigating back immediately
+        setShowExitModal(true);
+        return true; // Prevents the default back action
+      };
+
+      const subscription = BackHandler.addEventListener(
+        'hardwareBackPress',
+        onBackPress
+      );
+
+      return () => subscription.remove();
+    }, [])
+  );
+
 
   const startTimer = () => {
     stopTimer();
